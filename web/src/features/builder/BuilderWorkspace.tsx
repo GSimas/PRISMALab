@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Download, FileCheck2, Focus, HelpCircle, Maximize2, Redo2, Sparkles, Trash2, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
 import { useApp } from '../../app/AppProviders';
 import { useProjectStore } from '../../app/store';
+import { usePresence } from '../../app/usePresence';
 import { calculateProject, emptyCounts, hasOtherSources, isUpdatedModel, selectModel } from '../../domain/calculations';
 import { createExampleChecklist, createChecklist } from '../../domain/checklist';
 import { createProject } from '../../domain/project';
@@ -36,6 +37,7 @@ export function BuilderWorkspace() {
   const [zoom, setZoom] = useState(0.82);
   const [saveState, setSaveState] = useState<'saving' | 'saved'>('saved');
   const [confirmClear, setConfirmClear] = useState(false);
+  const clearModal = usePresence(confirmClear);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const flashTimeoutRef = useRef<number | undefined>(undefined);
 
@@ -520,8 +522,8 @@ export function BuilderWorkspace() {
         </div>
       )}
 
-      {confirmClear && (
-        <div className="modal-backdrop" role="presentation">
+      {clearModal.rendered && (
+        <div className="modal-backdrop" role="presentation" data-state={clearModal.state}>
           <section className="modal" role="alertdialog" aria-modal="true" aria-labelledby="clear-title">
             <h2 id="clear-title">{t('clearModalTitle')}</h2>
             <p>{t('clearModalBody')}</p>

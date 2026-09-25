@@ -1,0 +1,246 @@
+/*
+ * Motion system.
+ *
+ * Conventions:
+ * - Entrance/reveal keyframes animate `translate`, `scale` and `opacity`; hover and
+ *   press states use `transform`. Keeping them on separate properties lets a
+ *   finished entrance never block a hover lift.
+ * - Every animation here is switched off by the reduced-motion rules at the end
+ *   of system.css (OS preference and the in-app "reduce motion" toggle).
+ * - Exit animations last --motion-exit; keep it in sync with EXIT_MS in
+ *   src/app/usePresence.ts.
+ */
+
+@property --progress { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+
+:root {
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --motion-slow: 420ms;
+  --motion-page: 560ms;
+  --motion-exit: 180ms;
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --ease-in: cubic-bezier(.5, 0, .75, 0);
+  --ease-spring: cubic-bezier(.34, 1.36, .64, 1);
+  --glow-color: rgb(255 189 74 / 24%);
+  --glow-shadow: 0 18px 40px -24px rgb(141 79 6 / 55%);
+  interpolate-size: allow-keywords;
+}
+:root[data-theme='dark'] {
+  --glow-color: rgb(255 189 74 / 13%);
+  --glow-shadow: 0 18px 44px -22px rgb(255 189 74 / 38%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --glow-color: rgb(255 189 74 / 13%);
+    --glow-shadow: 0 18px 44px -22px rgb(255 189 74 / 38%);
+  }
+}
+
+@keyframes rise-in { from { opacity: 0; translate: 0 14px; } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes slide-in-right { from { opacity: 0; translate: 28px 0; } }
+@keyframes pop-in { from { opacity: 0; translate: 0 -6px; scale: .97; } }
+@keyframes modal-in { from { opacity: 0; translate: 0 10px; scale: .96; } }
+@keyframes modal-out { to { opacity: 0; translate: 0 6px; scale: .98; } }
+@keyframes panel-in { from { opacity: 0; translate: 0 12px; scale: .94; } }
+@keyframes panel-out { to { opacity: 0; translate: 0 8px; scale: .96; } }
+@keyframes toast-in { from { opacity: 0; translate: 0 16px; } }
+@keyframes toast-out { to { opacity: 0; translate: 0 10px; } }
+@keyframes draw-down { from { scale: 1 0; } }
+@keyframes breathe { 0%, 100% { box-shadow: 0 0 10px var(--amber); } 50% { box-shadow: 0 0 22px var(--amber-bright); } }
+@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 55%, transparent); } 70%, 100% { box-shadow: 0 0 0 7px transparent; } }
+
+/* ---------- Page transitions ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+}
+::view-transition-group(root) { animation-duration: var(--motion-base); }
+.global-header { view-transition-name: site-header; }
+.coffee-button { view-transition-name: coffee-button; }
+
+:where(#main-content) > * { animation: rise-in var(--motion-page) var(--ease-out) backwards; }
+:where(#main-content) > :nth-child(2) { animation-delay: 60ms; }
+:where(#main-content) > :nth-child(3) { animation-delay: 120ms; }
+:where(#main-content) > :nth-child(n + 4) { animation-delay: 180ms; }
+/* Persistent chrome and hero regions handle their own motion. */
+.landing-page > .hero { animation: none; }
+/* Builder tab panels mount on tab switch: animate them without the page stagger. */
+.builder-page > .single-module, .builder-page > .builder-workspace { animation-delay: 0ms; }
+
+.hero-copy > * { animation: rise-in var(--motion-page) var(--ease-out) backwards; }
+.hero-copy > :nth-child(2) { animation-delay: 70ms; }
+.hero-copy > :nth-child(3) { animation-delay: 140ms; }
+.hero-copy > :nth-child(4) { animation-delay: 210ms; }
+.hero-copy > :nth-child(n + 5) { animation-delay: 280ms; }
+.diagram-preview { animation: slide-in-right var(--motion-page) var(--ease-out) 160ms backwards; }
+.flow-step { animation: rise-in var(--motion-slow) var(--ease-out) backwards; }
+.flow-step:nth-child(1) { animation-delay: 360ms; }
+.flow-step:nth-child(2) { animation-delay: 440ms; }
+.flow-step:nth-child(3) { animation-delay: 520ms; }
+.flow-step:nth-child(4) { animation-delay: 600ms; }
+.flow-line { transform-origin: top; animation: draw-down var(--motion-slow) var(--ease-out) backwards; animation-delay: inherit; }
+.eyebrow span { animation: breathe 3.6s ease-in-out infinite; }
+.status-dot { animation: pulse-ring 2.8s ease-out infinite; }
+
+.project-grid > * { animation: rise-in var(--motion-slow) var(--ease-out) backwards; }
+.project-grid > :nth-child(2) { animation-delay: 50ms; }
+.project-grid > :nth-child(3) { animation-delay: 100ms; }
+.project-grid > :nth-child(4) { animation-delay: 150ms; }
+.project-grid > :nth-child(n + 5) { animation-delay: 200ms; }
+
+/* Blocks further down the page reveal as they scroll in (progressive enhancement). */
+@supports (animation-timeline: view()) {
+  .home-intro > *, .feature-grid article, .independence-note, .topic-card, .definition-pair article, .extension-directory article {
+    animation: rise-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 60%;
+  }
+}
+
+/* ---------- Hover lighting ----------
+ * A soft light follows the cursor (coordinates from MotionEffects.tsx, which
+ * uses the same selector list). The ::after layer sits between the element's
+ * background and its content thanks to `isolation` + negative z-index.
+ */
+:where(.primary-button, .secondary-button, .danger-button, .header-primary, .feature-grid article, .topic-card, .project-card, .extension-directory article, .definition-pair article, .flow-card, .export-grid button, .checklist-item, .validation-item, .independence-note, .recommendation-panel, .guideline-form fieldset, .empty-state, .database-sources-block) {
+  position: relative;
+  isolation: isolate;
+}
+:is(.primary-button, .secondary-button, .danger-button, .header-primary, .feature-grid article, .topic-card, .project-card, .extension-directory article, .definition-pair article, .flow-card, .export-grid button, .checklist-item, .validation-item, .independence-note, .recommendation-panel, .guideline-form fieldset, .empty-state, .database-sources-block)::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(var(--glow-size, 320px) circle at var(--mx, 50%) var(--my, 50%), var(--glow-color), transparent 70%);
+  opacity: 0;
+  transition: opacity var(--motion-slow) var(--ease-out);
+}
+:is(.primary-button, .danger-button, .header-primary) { --glow-size: 140px; --glow-color: rgb(255 255 255 / 38%); }
+:is(.secondary-button, .export-grid button, .validation-item) { --glow-size: 180px; }
+:root[data-contrast='high'] :is(.primary-button, .secondary-button, .danger-button, .header-primary, .feature-grid article, .topic-card, .project-card, .extension-directory article, .definition-pair article, .flow-card, .export-grid button, .checklist-item, .validation-item, .independence-note, .recommendation-panel, .guideline-form fieldset, .empty-state, .database-sources-block)::after { display: none; }
+
+/* ---------- Interactive states ---------- */
+
+.primary-button, .secondary-button, .danger-button, .header-primary, .header-scientata-link, .icon-button, .text-button,
+.card-actions button, .builder-toolbar button, .builder-toolbar a, .builder-tabs button, .export-grid button,
+.a11y-menu > summary, .mobile-menu > summary, .compact-select, .checklist-item .info-toggle, .reasons-editor > div button,
+.coffee-button, .assistant-fab, .desktop-nav a, .global-footer a, .brand-mark, .source-link, .extension-directory a, .prose-page a {
+  transition:
+    transform var(--motion-base) var(--ease-out), background-color var(--motion-base) var(--ease-out),
+    border-color var(--motion-base) var(--ease-out), color var(--motion-base) var(--ease-out),
+    box-shadow var(--motion-base) var(--ease-out), opacity var(--motion-base) var(--ease-out);
+}
+.feature-grid article, .topic-card, .project-card, .extension-directory article, .definition-pair article, .flow-card,
+.checklist-item, .validation-item, .independence-note, .recommendation-panel, .guideline-form fieldset, .diagram-preview,
+.empty-state, .database-sources-block, .form-section > summary, .checklist-section > summary, .prose-page summary {
+  transition:
+    transform var(--motion-slow) var(--ease-out), border-color var(--motion-base) var(--ease-out),
+    box-shadow var(--motion-slow) var(--ease-out), background-color var(--motion-base) var(--ease-out), color var(--motion-base) var(--ease-out);
+}
+.feature-grid article > svg, .topic-card header span, .feature-grid article > span, .card-actions svg { transition: transform var(--motion-slow) var(--ease-out), color var(--motion-base) var(--ease-out); }
+input, select, textarea { transition: border-color var(--motion-base) var(--ease-out), box-shadow var(--motion-base) var(--ease-out), background-color var(--motion-base) var(--ease-out); }
+.prisma-svg { transition: width var(--motion-base) var(--ease-out), height var(--motion-base) var(--ease-out); }
+.diagram-node rect { transition: stroke var(--motion-base) var(--ease-out), fill var(--motion-base) var(--ease-out), stroke-width var(--motion-base) var(--ease-out); }
+.diagram-node { transition: filter var(--motion-base) var(--ease-out); }
+.classic-stage-band { transition: fill var(--motion-base) var(--ease-out); }
+.progress-ring { transition: --progress var(--motion-page) var(--ease-out); }
+.project-progress i { transition: width var(--motion-page) var(--ease-out); }
+.save-indicator span { transition: background-color var(--motion-base) var(--ease-out); }
+
+/* Header nav: underline grows from the centre instead of snapping in. */
+.desktop-nav a { position: relative; border-bottom: 0; }
+.desktop-nav a::after { content: ''; position: absolute; right: 0; bottom: 0; left: 0; height: 1px; background: var(--amber); transform: scaleX(0); transition: transform var(--motion-base) var(--ease-out); }
+.desktop-nav a:hover::after, .desktop-nav a:focus-visible::after { transform: scaleX(1); }
+
+@media (hover: hover) and (pointer: fine) {
+  :is(.primary-button, .secondary-button, .danger-button, .header-primary, .feature-grid article, .topic-card, .project-card, .extension-directory article, .definition-pair article, .flow-card, .export-grid button, .checklist-item, .validation-item, .independence-note, .recommendation-panel, .guideline-form fieldset, .empty-state, .database-sources-block):hover::after { opacity: 1; }
+
+  .primary-button:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -12px rgb(255 189 74 / 85%); }
+  .header-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--ink) 80%, transparent); }
+  .secondary-button:hover { transform: translateY(-2px); border-color: var(--amber); box-shadow: var(--glow-shadow); }
+  .danger-button:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -12px color-mix(in srgb, var(--red) 80%, transparent); }
+  .icon-button:hover, .card-actions button:hover, .a11y-menu > summary:hover, .mobile-menu > summary:hover, .checklist-item .info-toggle:hover {
+    border-color: var(--amber); color: var(--ink); background-color: color-mix(in srgb, var(--amber-bright) 10%, var(--surface));
+  }
+  .card-actions button:hover svg { transform: scale(1.12); }
+  .compact-select:hover { border-color: var(--line-strong); }
+  .text-button:hover { color: var(--amber); }
+  .builder-toolbar button:hover, .builder-toolbar a:hover { background-color: color-mix(in srgb, var(--amber-bright) 9%, transparent); }
+  .builder-tabs button:hover { color: var(--ink); background-color: color-mix(in srgb, var(--amber-bright) 8%, transparent); }
+  .brand:hover .brand-mark { border-color: var(--amber); box-shadow: 0 0 18px -4px var(--amber-bright); }
+  .global-footer a:hover { color: var(--amber); }
+  .source-link:hover, .extension-directory a:hover, .prose-page a:hover { color: var(--amber); }
+
+  .feature-grid article:hover, .topic-card:hover, .extension-directory article:hover, .definition-pair article:hover { background-color: color-mix(in srgb, var(--surface) 92%, var(--amber-bright)); }
+  .feature-grid article:hover > svg { transform: translateY(-3px) scale(1.06); }
+  .feature-grid article:hover > span, .topic-card:hover header span { color: var(--amber); transform: translateX(-3px); }
+  .project-card:hover, .export-grid button:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--amber) 60%, var(--line)); box-shadow: var(--glow-shadow); }
+  .flow-card:hover { transform: translateX(4px); border-color: var(--amber); }
+  .checklist-item:hover, .guideline-form fieldset:hover, .database-sources-block:hover, .empty-state:hover { border-color: var(--line-strong); }
+  .validation-item:hover { transform: translateX(3px); }
+  .independence-note:hover, .recommendation-panel:hover { border-color: var(--line-strong); box-shadow: var(--glow-shadow); }
+  .diagram-preview:hover { box-shadow: 30px 30px 0 color-mix(in srgb, var(--blue) 18%, transparent); }
+  .form-section > summary:hover, .checklist-section > summary:hover, .prose-page summary:hover { color: var(--amber); }
+  .diagram-node:hover { filter: drop-shadow(0 4px 10px rgb(255 174 45 / 35%)); }
+  input:hover:not(:disabled):not(:focus), select:hover:not(:disabled):not(:focus), textarea:hover:not(:disabled):not(:focus) { border-color: var(--line-strong); }
+}
+
+input:focus, select:focus, textarea:focus { border-color: var(--amber); box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber-bright) 22%, transparent); }
+.project-title-input:focus { box-shadow: none; }
+
+/* Press feedback. */
+:is(.primary-button, .secondary-button, .danger-button, .header-primary, .export-grid button):active { transform: translateY(0) scale(.98); transition-duration: 60ms; }
+:is(.icon-button, .card-actions button, .builder-toolbar button, .a11y-menu > summary, .mobile-menu > summary, .assistant-fab, .coffee-button):active { transform: scale(.94); transition-duration: 60ms; }
+
+/* ---------- Dropdowns and disclosures ---------- */
+
+.a11y-menu[open] > .popover-panel, .mobile-menu[open] > nav { transform-origin: top right; animation: pop-in var(--motion-base) var(--ease-spring); }
+.a11y-menu::details-content, .mobile-menu::details-content {
+  opacity: 0;
+  transition: opacity var(--motion-exit) var(--ease-out), content-visibility var(--motion-exit) allow-discrete;
+}
+.a11y-menu[open]::details-content, .mobile-menu[open]::details-content { opacity: 1; }
+.mobile-menu nav a { transition: background-color var(--motion-base) var(--ease-out), color var(--motion-base) var(--ease-out), padding var(--motion-base) var(--ease-out); }
+.mobile-menu nav a:hover { padding-left: 1.3rem; background-color: color-mix(in srgb, var(--amber-bright) 9%, transparent); color: var(--amber); }
+
+/* Accordions: height animates where the browser supports ::details-content + interpolate-size;
+ * elsewhere the revealed content still fades in. */
+details:not(.a11y-menu, .mobile-menu)::details-content {
+  block-size: 0;
+  overflow-y: clip;
+  transition: block-size var(--motion-slow) var(--ease-out), content-visibility var(--motion-slow) allow-discrete;
+}
+details:not(.a11y-menu, .mobile-menu)[open]::details-content { block-size: auto; }
+details:not(.a11y-menu, .mobile-menu)[open] > :not(summary) { animation: fade-in var(--motion-slow) var(--ease-out); }
+
+.checklist-info, .mapping-preview, .override-box { animation: rise-in var(--motion-base) var(--ease-out); }
+.assistant-message { animation: rise-in var(--motion-base) var(--ease-out); }
+
+/* ---------- Modals, panels and toasts ---------- */
+
+.modal-backdrop { animation: fade-in var(--motion-base) var(--ease-out); backdrop-filter: blur(3px); }
+.modal-backdrop > .modal { animation: modal-in var(--motion-slow) var(--ease-spring); }
+.modal-backdrop[data-state='closing'] { pointer-events: none; animation: fade-out var(--motion-exit) var(--ease-in) forwards; }
+.modal-backdrop[data-state='closing'] > .modal { animation: modal-out var(--motion-exit) var(--ease-in) forwards; }
+
+.assistant-panel { transform-origin: bottom right; animation: panel-in var(--motion-slow) var(--ease-spring); }
+.assistant-panel[data-state='closing'] { pointer-events: none; animation: panel-out var(--motion-exit) var(--ease-in) forwards; }
+.assistant-fab svg { transition: transform var(--motion-slow) var(--ease-spring); }
+.assistant-fab:hover svg { transform: rotate(18deg) scale(1.08); }
+.assistant-fab[aria-expanded='true'] svg { transform: rotate(90deg); }
+
+.undo-toast { animation: toast-in var(--motion-slow) var(--ease-spring); }
+.undo-toast[data-state='closing'] { pointer-events: none; animation: toast-out var(--motion-exit) var(--ease-in) forwards; }
+
+/* Reduced motion must also cancel pseudo-elements the global `*` rules don't reach. */
+@media (prefers-reduced-motion: reduce) {
+  details::details-content { transition: none !important; }
+}
+:root[data-motion='reduced'] details::details-content { transition: none !important; }
+:root[data-motion='reduced']::view-transition-group(*),
+:root[data-motion='reduced']::view-transition-old(*),
+:root[data-motion='reduced']::view-transition-new(*) { animation: none !important; }

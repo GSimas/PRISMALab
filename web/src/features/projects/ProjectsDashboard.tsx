@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Copy, Download, FilePlus2, FolderOpen, Pencil, Search, Trash2 } from 'lucide-react';
 import { useApp } from '../../app/AppProviders';
+import { usePresence } from '../../app/usePresence';
 import { createProject } from '../../domain/project';
 import { progressFor, validateProject } from '../../domain/validation';
 import type { PrismaProject, ProjectStatus } from '../../domain/types';
@@ -20,6 +21,12 @@ export function ProjectsDashboard() {
   const [deleted, setDeleted] = useState<PrismaProject | null>(null);
   const [renaming, setRenaming] = useState<PrismaProject | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const deleteModal = usePresence(confirmDelete);
+  const renameModal = usePresence(renaming);
+  const undoToast = usePresence(deleted);
+  const deleting = deleteModal.rendered;
+  const renamed = renameModal.rendered;
+  const restorable = undoToast.rendered;
 
   const refresh = () => listProjects().then(setProjects);
   useEffect(() => {
@@ -138,11 +145,11 @@ export function ProjectsDashboard() {
 
       <ImportWizard onImport={importProject} />
 
-      {confirmDelete && (
-        <div className="modal-backdrop" role="presentation">
+      {deleting && (
+        <div className="modal-backdrop" role="presentation" data-state={deleteModal.state}>
           <section className="modal" role="alertdialog" aria-modal="true" aria-labelledby="delete-title">
             <h2 id="delete-title">{t('deleteProjectTitle')}</h2>
-            <p>“{confirmDelete.title}” {t('deleteProjectBody')}</p>
+            <p>“{deleting.title}” {t('deleteProjectBody')}</p>
             <div>
               <button className="secondary-button" onClick={() => setConfirmDelete(null)}>
                 {t('cancel')}
@@ -150,8 +157,8 @@ export function ProjectsDashboard() {
               <button
                 className="danger-button"
                 onClick={async () => {
-                  await deleteProject(confirmDelete.id);
-                  setDeleted(confirmDelete);
+                  await deleteProject(deleting.id);
+                  setDeleted(deleting);
                   setConfirmDelete(null);
                   refresh();
                 }}
@@ -163,8 +170,8 @@ export function ProjectsDashboard() {
         </div>
       )}
 
-      {renaming && (
-        <div className="modal-backdrop">
+      {renamed && (
+        <div className="modal-backdrop" data-state={renameModal.state}>
           <section className="modal" role="dialog" aria-modal="true" aria-labelledby="rename-title">
             <h2 id="rename-title">{t('renameProjectTitle')}</h2>
             <label>
@@ -178,7 +185,7 @@ export function ProjectsDashboard() {
               <button
                 className="primary-button"
                 onClick={async () => {
-                  await saveProject({ ...renaming, title: renameValue });
+                  await saveProject({ ...renamed, title: renameValue });
                   setRenaming(null);
                   refresh();
                 }}
@@ -190,12 +197,12 @@ export function ProjectsDashboard() {
         </div>
       )}
 
-      {deleted && (
-        <div className="undo-toast" role="status">
+      {restorable && (
+        <div className="undo-toast" role="status" data-state={undoToast.state}>
           {t('projectDeleted')}{' '}
           <button
             onClick={async () => {
-              await saveProject(deleted);
+              await saveProject(restorable);
               setDeleted(null);
               refresh();
             }}

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Eye, EyeOff, Loader2, Send, Settings, Sparkles, Trash2, X } from 'lucide-react';
 import { useApp } from '../app/AppProviders';
 import { useProjectStore } from '../app/store';
+import { usePresence } from '../app/usePresence';
 import { assistantProviderMeta, assistantProviders } from '../features/assistant/providers';
 import { useAssistantSettings } from '../features/assistant/useAssistantSettings';
 import { buildAssistantSystemPrompt, buildProjectContext } from '../features/assistant/context';
@@ -27,6 +28,7 @@ export function PrismaAssistant() {
   const { ready, settings, activeConfig, isConfigured, setActiveProvider, updateProvider, clearProvider, setConsent } = useAssistantSettings();
 
   const [open, setOpen] = useState(false);
+  const panel = usePresence(open);
   const [view, setView] = useState<'chat' | 'settings'>('settings');
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [input, setInput] = useState('');
@@ -116,8 +118,8 @@ export function PrismaAssistant() {
       <button type="button" className="assistant-fab" onClick={toggleOpen} aria-label={t('assistantOpen')} aria-expanded={open} title="Primi">
         <Sparkles size={20} aria-hidden="true" />
       </button>
-      {open && (
-        <div className="assistant-panel" role="dialog" aria-label="Primi — Assistente PRISMA">
+      {panel.rendered && (
+        <div className="assistant-panel" role="dialog" aria-label="Primi — Assistente PRISMA" data-state={panel.state}>
           <header className="assistant-panel-header">
             <div>
               <strong>Primi</strong>

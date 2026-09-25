@@ -1,9 +1,10 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Locale, ThemePreference } from '../domain/types';
 import { detectLocale, supportedLocales } from '../i18n/locale';
 import { translations, type TranslationKey } from '../i18n/translations';
+import { withViewTransition } from './motion';
 
 interface AccessibilityPreferences {
   contrast: boolean;
@@ -34,6 +35,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('pt-BR');
   const [theme, setThemeState] = useState<ThemePreference>('system');
   const [accessibility, setAccessibilityState] = useState<AccessibilityPreferences>(defaults);
+  const animateThemeChange = useRef(false);
 
   useEffect(() => {
     const hydratePreferences = window.setTimeout(() => {
@@ -68,7 +70,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
       document.documentElement.style.colorScheme = resolved;
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#08101f' : '#f5f1e8');
     };
-    apply();
+    if (animateThemeChange.current) withViewTransition(apply);
+    else apply();
+    animateThemeChange.current = false;
     media.addEventListener('change', apply);
     localStorage.setItem('prisma-theme', theme);
     return () => media.removeEventListener('change', apply);
@@ -87,7 +91,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
     locale,
     setLocale: (next) => setLocaleState(next),
     theme,
-    setTheme: (next) => setThemeState(next),
+    setTheme: (next) => {
+      animateThemeChange.current = true;
+      setThemeState(next);
+    },
     accessibility,
     setAccessibility: setAccessibilityState,
     restoreAccessibility: () => setAccessibilityState(defaults),

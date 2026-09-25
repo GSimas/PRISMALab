@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { AppProviders } from '@/src/app/AppProviders';
 import { GlobalHeader } from '@/src/components/GlobalHeader';
 import { GlobalFooter } from '@/src/components/GlobalFooter';
+import { MotionEffects } from '@/src/components/MotionEffects';
 import { PrismaAssistant } from '@/src/components/PrismaAssistant';
 import './globals.css';
 import '@/src/styles/system.css';
@@ -9,6 +10,7 @@ import '@/src/styles/landing.css';
 import '@/src/styles/builder.css';
 import '@/src/styles/content.css';
 import '@/src/styles/assistant.css';
+import '@/src/styles/motion.css';
 
 const siteUrl = new URL(process.env.URL ?? 'http://localhost:3000');
 
@@ -52,6 +54,11 @@ export const viewport: Viewport = {
   colorScheme: 'light dark',
 };
 
+// Runs before first paint: applies the saved reduced-motion preference early and
+// skips the cross-document view transition for users who asked for less motion.
+const motionPreferenceScript = `try{var a=JSON.parse(localStorage.getItem('prisma-accessibility')||'null');if(a&&a.reduceMotion)document.documentElement.dataset.motion='reduced'}catch(e){}
+addEventListener('pagereveal',function(e){if(e.viewTransition&&document.documentElement.dataset.motion==='reduced')e.viewTransition.skipTransition()});`;
+
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': ['SoftwareApplication', 'WebApplication', 'LearningResource'],
@@ -68,11 +75,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body>
+        <script dangerouslySetInnerHTML={{ __html: motionPreferenceScript }} />
         <AppProviders>
           <GlobalHeader />
           {children}
           <GlobalFooter />
           <PrismaAssistant />
+          <MotionEffects />
         </AppProviders>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       </body>
