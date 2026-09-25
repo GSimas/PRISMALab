@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { calculateProject } from '../../src/domain/calculations';
 import { createProject } from '../../src/domain/project';
-import { assistantProviderMeta, isProviderConfigured, resolveBaseUrl } from '../../src/features/assistant/providers';
+import { sendAssistantMessage } from '../../src/features/assistant/client';
+import { assistantProviderMeta, isOpenRouterFreeModel, isProviderConfigured, resolveBaseUrl } from '../../src/features/assistant/providers';
+import { AssistantError } from '../../src/features/assistant/types';
 import { buildAssistantSystemPrompt } from '../../src/features/assistant/context';
 import { extractProposal, planProposal } from '../../src/features/assistant/proposals';
 
@@ -84,5 +86,40 @@ describe('idioma das respostas do Primi', () => {
     expect(prompt).toMatch(/language of the user's latest message/);
     expect(prompt).toMatch(/use the interface language: English/);
     expect(prompt).not.toMatch(/Always respond in this language/);
+  });
+});
+
+describe('modelo gratuito do OpenRouter', () => {
+  const config = { apiKey: 'sk-or-v1-test', model: assistantProviderMeta('openrouter').defaultModel };
+  const history = [{ id: '1', role: 'user' as const, content: 'Oi', at: '' }];
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('usa um modelo gratuito por padrão', () => {
+    expect(isOpenRouterFreeModel(config.model)).toBe(true);
+  });
+
+  it('recorre ao roteador gratuito quando o modelo padrão está ocupado', async () => {
+    const fetcher = vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { content: 'Olá' } }] }), { status: 200 }));
+    vi.stubGlobal('fetch', fetcher);
+    await expect(sendAssistantMessage({ providerId: 'openrouter', config, systemPrompt: 's', history })).resolves.toBe('Olá');
+    const body = JSON.parse((fetcher.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
+    expect(body.models).toEqual([config.model, 'openrouter/free']);
+    expect(body.model).toBeUndefined();
+  });
+
+  it('mantém o modelo escolhido quando ele é pago', async () => {
+    const fetcher = vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { content: 'ok' } }] }), { status: 200 }));
+    vi.stubGlobal('fetch', fetcher);
+    await sendAssistantMessage({ providerId: 'openrouter', config: { ...config, model: 'deepseek/deepseek-v4-pro' }, systemPrompt: 's', history });
+    const body = JSON.parse((fetcher.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
+    expect(body).toMatchObject({ model: 'deepseek/deepseek-v4-pro' });
+    expect(body.models).toBeUndefined();
+  });
+
+  it('explica limites do modelo gratuito em vez de um erro genérico', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{"error":"rate limited"}', { status: 429 })));
+    const error = await sendAssistantMessage({ providerId: 'openrouter', config, systemPrompt: 's', history }).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(AssistantError);
+    expect((error as AssistantError).reason).toBe('free-model');
   });
 });

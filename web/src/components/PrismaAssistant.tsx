@@ -24,6 +24,7 @@ const errorMessageKeys: Record<AssistantError['reason'], TranslationKey> = {
   network: 'assistantErrorNetwork',
   http: 'assistantErrorHttp',
   'empty-response': 'assistantErrorEmpty',
+  'free-model': 'assistantErrorFreeModel',
 };
 const errorKeyFor = (reason: AssistantError['reason']) => errorMessageKeys[reason];
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { assistantProviderMeta, isProviderConfigured } from './providers';
+import { assistantProviderMeta, isProviderConfigured, OPENROUTER_PREVIOUS_DEFAULT } from './providers';
 import type { AssistantProviderConfig, AssistantProviderId, AssistantSettings } from './types';
 
 const STORAGE_KEY = 'prisma-assistant-settings-v1';
@@ -59,15 +59,20 @@ export function useAssistantSettings() {
 
   /** Stores the key from "Sign in with OpenRouter" and makes OpenRouter the active provider. */
   const connectOpenRouter = (apiKey: string) =>
-    setSettings((s) => ({
-      ...s,
-      consent: true,
-      activeProvider: 'openrouter',
-      providers: {
-        ...s.providers,
-        openrouter: { ...s.providers.openrouter, apiKey, model: s.providers.openrouter?.model || assistantProviderMeta('openrouter').defaultModel, oauth: true },
-      },
-    }));
+    setSettings((s) => {
+      // Keeps a model the user picked; otherwise starts on the free default.
+      const saved = s.providers.openrouter?.model;
+      const model = saved && saved !== OPENROUTER_PREVIOUS_DEFAULT ? saved : assistantProviderMeta('openrouter').defaultModel;
+      return {
+        ...s,
+        consent: true,
+        activeProvider: 'openrouter',
+        providers: {
+          ...s.providers,
+          openrouter: { ...s.providers.openrouter, apiKey, model, oauth: true },
+        },
+      };
+    });
 
   const activeConfig = settings.providers[settings.activeProvider];
   const isConfigured = isProviderConfigured(assistantProviderMeta(settings.activeProvider), activeConfig);

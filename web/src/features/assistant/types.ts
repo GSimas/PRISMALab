@@ -37,7 +37,7 @@ export interface AssistantMessage {
   proposalInvalid?: boolean;
 }
 
-export type AssistantErrorReason = 'missing-key' | 'network' | 'http' | 'empty-response';
+export type AssistantErrorReason = 'missing-key' | 'network' | 'http' | 'empty-response' | 'free-model';
 
 export class AssistantError extends Error {
   reason: AssistantErrorReason;

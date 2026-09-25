@@ -24,6 +24,19 @@ export interface AssistantProviderMeta {
   noteKey?: TranslationKey;
 }
 
+/** Free OpenRouter model used by default; `openrouter/free` routes to any free model when it is busy. */
+export const OPENROUTER_FREE_MODEL = 'google/gemma-4-31b-it:free';
+export const OPENROUTER_FREE_ROUTER = 'openrouter/free';
+/** Former paid default: treated as "not chosen" when signing in with OpenRouter. */
+export const OPENROUTER_PREVIOUS_DEFAULT = 'openai/gpt-6-luna';
+
+/** Free OpenRouter models (`:free` or the free router). */
+export const isOpenRouterFreeModel = (model: string) => model.endsWith(':free') || model === OPENROUTER_FREE_ROUTER;
+
+/** A free model falls back to the free router when it is rate-limited or unavailable. */
+export const openRouterModels = (model: string) =>
+  model.endsWith(':free') ? { models: [model, OPENROUTER_FREE_ROUTER] } : { model };
+
 export const assistantProviders: AssistantProviderMeta[] = [
   {
     id: 'openai',
@@ -139,8 +152,9 @@ export const assistantProviders: AssistantProviderMeta[] = [
     label: 'OpenRouter',
     protocol: 'openai',
     baseUrl: 'https://openrouter.ai/api/v1',
-    defaultModel: 'openai/gpt-6-luna',
-    modelHint: 'e.g. openai/gpt-6-luna, deepseek/deepseek-v4-pro',
+    // Free by default: sign-in users start without paying (free models have daily limits).
+    defaultModel: OPENROUTER_FREE_MODEL,
+    modelHint: 'e.g. google/gemma-4-31b-it:free, openrouter/free, deepseek/deepseek-v4-pro',
     keyUrl: 'https://openrouter.ai/keys',
   },
   {

@@ -1,7 +1,7 @@
 'use client';
 
 import { describeProposalDecisions } from './proposals';
-import { assistantProviderMeta, isProviderConfigured, resolveBaseUrl, type AssistantProviderMeta } from './providers';
+import { assistantProviderMeta, isOpenRouterFreeModel, isProviderConfigured, openRouterModels, resolveBaseUrl, type AssistantProviderMeta } from './providers';
 import { AssistantError, type AssistantMessage, type AssistantProviderConfig, type AssistantProviderId } from './types';
 
 interface SendParams {
@@ -62,14 +62,16 @@ async function sendOpenAiCompatible(meta: AssistantProviderMeta, config: Assista
     method: 'POST',
     headers,
     body: JSON.stringify({
-      model: config.model,
+      ...(meta.id === 'openrouter' ? openRouterModels(config.model) : { model: config.model }),
       messages: [{ role: 'system', content: systemPrompt }, ...conversation(history)],
       ...limits,
     }),
   });
   if (!response.ok) {
     const body = await readErrorBody(response);
-    throw new AssistantError('http', `HTTP ${response.status}: ${body}`);
+    // Free models: daily/rate limits (429) or an account privacy setting that excludes free endpoints (404).
+    const freeLimit = meta.id === 'openrouter' && isOpenRouterFreeModel(config.model) && (response.status === 429 || response.status === 404);
+    throw new AssistantError(freeLimit ? 'free-model' : 'http', `HTTP ${response.status}: ${body}`);
   }
   const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };
   const content = data?.choices?.[0]?.message?.content;
