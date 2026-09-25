@@ -1,8 +1,11 @@
 'use client';
 
-import { ArrowRight, Database, FileDown, Languages, LockKeyhole, Network, ScanSearch, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Database, FileDown, Languages, LockKeyhole, Network, ScanSearch, ShieldCheck, Sparkles } from 'lucide-react';
 import { useApp } from '../app/AppProviders';
+import { createExampleChecklist } from '../domain/checklist';
+import { createProject } from '../domain/project';
 import type { Locale } from '../domain/types';
+import { saveProject } from '../storage/db';
 
 interface Stage {
   label: string;
@@ -23,6 +26,7 @@ const landingContent: Record<
     emphasis: string;
     lead: string;
     primary: string;
+    example: string;
     secondary: string;
     privacy: string;
     sectionKicker: string;
@@ -42,6 +46,7 @@ const landingContent: Record<
     emphasis: 'Lab',
     lead: 'Construa, verifique e publique diagramas PRISMA 2020 com orientação metodológica, cálculos rastreáveis e controle total dos seus dados.',
     primary: 'Criar meu diagrama',
+    example: 'Explorar exemplo',
     secondary: 'Entender o PRISMA',
     privacy: 'Seus projetos permanecem neste navegador. Nenhum dado é enviado por padrão.',
     sectionKicker: 'ASSISTÊNCIA AO RELATO',
@@ -72,6 +77,7 @@ const landingContent: Record<
     emphasis: 'Lab',
     lead: 'Build, check and publish PRISMA 2020 diagrams with methodological guidance, traceable calculations and full control of your data.',
     primary: 'Create my diagram',
+    example: 'Explore example',
     secondary: 'Understand PRISMA',
     privacy: 'Projects stay in this browser. No data is sent by default.',
     sectionKicker: 'REPORTING ASSISTANCE',
@@ -102,6 +108,7 @@ const landingContent: Record<
     emphasis: 'Lab',
     lead: 'Crea, verifica e pubblica diagrammi PRISMA 2020 con guida metodologica, calcoli tracciabili e pieno controllo dei dati.',
     primary: 'Crea il diagramma',
+    example: 'Esplora un esempio',
     secondary: 'Comprendere PRISMA',
     privacy: 'I progetti restano nel browser. Nessun dato viene inviato per impostazione predefinita.',
     sectionKicker: 'ASSISTENZA AL REPORTING',
@@ -132,6 +139,7 @@ const landingContent: Record<
     emphasis: 'Lab',
     lead: 'Créez, vérifiez et publiez des diagrammes PRISMA 2020 avec des calculs traçables et le contrôle de vos données.',
     primary: 'Créer mon diagramme',
+    example: 'Explorer un exemple',
     secondary: 'Comprendre PRISMA',
     privacy: 'Les projets restent dans ce navigateur. Aucune donnée n’est envoyée par défaut.',
     sectionKicker: 'AIDE AU COMPTE RENDU',
@@ -162,6 +170,7 @@ const landingContent: Record<
     emphasis: 'Lab',
     lead: 'Erstellen, prüfen und veröffentlichen Sie PRISMA-2020-Diagramme mit nachvollziehbaren Berechnungen und voller Datenkontrolle.',
     primary: 'Diagramm erstellen',
+    example: 'Beispiel erkunden',
     secondary: 'PRISMA verstehen',
     privacy: 'Projekte bleiben in diesem Browser. Daten werden standardmäßig nicht gesendet.',
     sectionKicker: 'BERICHTSHILFE',
@@ -192,6 +201,7 @@ const landingContent: Record<
     emphasis: 'Lab',
     lead: '借助方法提示、可追溯计算和完全本地的数据控制，创建、检查并发布 PRISMA 2020 流程图。',
     primary: '创建流程图',
+    example: '浏览示例',
     secondary: '了解 PRISMA',
     privacy: '项目保存在此浏览器中，默认不会发送任何数据。',
     sectionKicker: '报告撰写辅助',
@@ -224,6 +234,12 @@ export function LandingPage() {
   const { locale, t } = useApp();
   const text = landingContent[locale] || landingContent['pt-BR'];
 
+  const exploreExample = async () => {
+    const project = createProject({ locale, model: 'new-databases-other', example: true });
+    await saveProject({ ...project, checklist: createExampleChecklist() });
+    window.location.href = `/builder?project=${project.id}`;
+  };
+
   return (
     <main id="main-content" className="landing-page">
       <section className="hero" aria-labelledby="hero-title">
@@ -239,6 +255,9 @@ export function LandingPage() {
             <a className="primary-button" href="/builder">
               {text.primary} <ArrowRight size={17} />
             </a>
+            <button className="secondary-button" type="button" onClick={exploreExample}>
+              <Sparkles size={17} /> {text.example}
+            </button>
             <a className="text-link" href="/learn">
               {text.secondary} ↘
             </a>
