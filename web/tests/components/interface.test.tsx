@@ -11,6 +11,7 @@ import { ExportPanel } from '../../src/features/export/ExportPanel';
 describe('componentes essenciais', () => {
   it('troca idioma, tema e alto contraste com persistência', async () => {
     localStorage.clear();
+    localStorage.setItem('prisma-locale', 'pt-BR');
     render(<AppProviders><GlobalHeader /></AppProviders>);
     await waitFor(() => expect(screen.getByLabelText('Idioma')).toBeEnabled());
     fireEvent.change(screen.getByLabelText('Idioma'), { target: { value: 'en' } });
@@ -25,6 +26,7 @@ describe('componentes essenciais', () => {
 
   it('traduz cabeçalho, rodapé e página inicial para todos os 6 idiomas', async () => {
     localStorage.clear();
+    localStorage.setItem('prisma-locale', 'pt-BR');
     render(
       <AppProviders>
         <GlobalHeader />

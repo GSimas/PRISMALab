@@ -51,12 +51,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(hydratePreferences);
   }, []);
 
+  // Persisting effects wait for `ready`; otherwise the initial defaults would
+  // overwrite the saved preferences before they are read.
   useEffect(() => {
+    if (!ready) return;
     document.documentElement.lang = locale;
     localStorage.setItem('prisma-locale', locale);
-  }, [locale]);
+  }, [ready, locale]);
 
   useEffect(() => {
+    if (!ready) return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const apply = () => {
       const resolved = resolveTheme(theme, media.matches);
@@ -68,14 +72,15 @@ export function AppProviders({ children }: { children: ReactNode }) {
     media.addEventListener('change', apply);
     localStorage.setItem('prisma-theme', theme);
     return () => media.removeEventListener('change', apply);
-  }, [theme]);
+  }, [ready, theme]);
 
   useEffect(() => {
+    if (!ready) return;
     document.documentElement.dataset.contrast = accessibility.contrast ? 'high' : 'normal';
     document.documentElement.dataset.motion = accessibility.reduceMotion ? 'reduced' : 'normal';
     document.documentElement.style.fontSize = `${accessibility.fontScale * 100}%`;
     localStorage.setItem('prisma-accessibility', JSON.stringify(accessibility));
-  }, [accessibility]);
+  }, [ready, accessibility]);
 
   const value = useMemo<AppContextValue>(() => ({
     ready,
