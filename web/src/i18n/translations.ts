@@ -232,6 +232,14 @@ const en = {
   assistantLocalHint: 'Runs on this computer: start Ollama with OLLAMA_ORIGINS allowing this site. No API key needed.',
   yes: 'Yes',
   no: 'No',
+  tourStart: 'Tour',
+  tourNext: 'Next',
+  tourBack: 'Back',
+  tourSkip: 'Skip tour',
+  tourFinish: 'Finish',
+  tourProgress: 'Step {current} of {total}',
+  tourClose: 'Close tour',
+  tourLandingCta: 'Take the guided tour',
 };
 
 export type TranslationKey = keyof typeof en;
@@ -459,6 +467,14 @@ const pt: Record<TranslationKey, string> = {
   assistantLocalHint: 'Roda neste computador: inicie o Ollama com OLLAMA_ORIGINS liberando este site. Não precisa de chave de API.',
   yes: 'Sim',
   no: 'Não',
+  tourStart: 'Tour',
+  tourNext: 'Próximo',
+  tourBack: 'Voltar',
+  tourSkip: 'Pular tour',
+  tourFinish: 'Concluir',
+  tourProgress: 'Passo {current} de {total}',
+  tourClose: 'Fechar tour',
+  tourLandingCta: 'Fazer o tour guiado',
 };
 
 const it: Record<TranslationKey, string> = {
@@ -661,6 +677,14 @@ const it: Record<TranslationKey, string> = {
   yes: 'Sì',
   no: 'No',
   assistantEmptyState: 'Chiedi di PRISMA 2020 o dei dati di questo progetto — oppure indica i tuoi numeri (es. “PubMed 320, Scopus 210, 85 duplicati”) e Primi proporrà la compilazione del diagramma da confermare.',
+  tourStart: 'Tour',
+  tourNext: 'Avanti',
+  tourBack: 'Indietro',
+  tourSkip: 'Salta il tour',
+  tourFinish: 'Fine',
+  tourProgress: 'Passo {current} di {total}',
+  tourClose: 'Chiudi il tour',
+  tourLandingCta: 'Fai il tour guidato',
 };
 
 const fr: Record<TranslationKey, string> = {
@@ -863,6 +887,14 @@ const fr: Record<TranslationKey, string> = {
   yes: 'Oui',
   no: 'Non',
   assistantEmptyState: 'Posez une question sur PRISMA 2020 ou les données de ce projet — ou donnez vos chiffres (p. ex. « PubMed 320, Scopus 210, 85 doublons ») et Primi proposera de remplir le diagramme, à confirmer.',
+  tourStart: 'Visite',
+  tourNext: 'Suivant',
+  tourBack: 'Retour',
+  tourSkip: 'Passer la visite',
+  tourFinish: 'Terminer',
+  tourProgress: 'Étape {current} sur {total}',
+  tourClose: 'Fermer la visite',
+  tourLandingCta: 'Suivre la visite guidée',
 };
 
 const de: Record<TranslationKey, string> = {
@@ -1065,6 +1097,14 @@ const de: Record<TranslationKey, string> = {
   yes: 'Ja',
   no: 'Nein',
   assistantEmptyState: 'Fragen Sie zu PRISMA 2020 oder den Projektdaten – oder nennen Sie Ihre Zahlen (z. B. „PubMed 320, Scopus 210, 85 Duplikate“), und Primi schlägt vor, das Diagramm auszufüllen – zur Bestätigung durch Sie.',
+  tourStart: 'Tour',
+  tourNext: 'Weiter',
+  tourBack: 'Zurück',
+  tourSkip: 'Tour überspringen',
+  tourFinish: 'Fertig',
+  tourProgress: 'Schritt {current} von {total}',
+  tourClose: 'Tour schließen',
+  tourLandingCta: 'Geführte Tour starten',
 };
 
 const zh: Record<TranslationKey, string> = {
@@ -1267,6 +1307,14 @@ const zh: Record<TranslationKey, string> = {
   yes: '是',
   no: '否',
   assistantEmptyState: '可以询问 PRISMA 2020 或本项目数据——也可以直接告诉 Primi 您的数字（例如“PubMed 320、Scopus 210、重复 85”），Primi 会提出填写流程图的建议，由您确认。',
+  tourStart: '导览',
+  tourNext: '下一步',
+  tourBack: '上一步',
+  tourSkip: '跳过导览',
+  tourFinish: '完成',
+  tourProgress: '第 {current} 步，共 {total} 步',
+  tourClose: '关闭导览',
+  tourLandingCta: '开始导览',
 };
 
 export const translations: Record<Locale, Record<TranslationKey, string>> = {

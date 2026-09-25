@@ -48,7 +48,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; background: var(--paper); }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-height) + .75rem); background: var(--paper); }
 body { margin: 0; min-width: 320px; background: var(--paper); color: var(--ink); font-family: var(--font-sans); line-height: 1.5; }
 button, input, select, textarea { color: inherit; font: inherit; }
 button, select { cursor: pointer; }

@@ -84,14 +84,25 @@ export function PrismaAssistant() {
     setDraftApiKey('');
   };
 
-  const toggleOpen = () => setOpen((wasOpen) => {
-    const next = !wasOpen;
+  const setPanelOpen = (next: boolean) => {
     if (next) {
       if (isConfigured && settings.consent) setView('chat');
       else enterSettingsView();
     }
-    return next;
+    setOpen(next);
+  };
+  const toggleOpen = () => setPanelOpen(!open);
+
+  // Other features (the guided tour) open or close the panel via a window event.
+  const setPanelOpenRef = useRef(setPanelOpen);
+  useEffect(() => {
+    setPanelOpenRef.current = setPanelOpen;
   });
+  useEffect(() => {
+    const onCommand = (event: Event) => setPanelOpenRef.current(!!(event as CustomEvent<{ open: boolean }>).detail?.open);
+    window.addEventListener('prisma:assistant', onCommand);
+    return () => window.removeEventListener('prisma:assistant', onCommand);
+  }, []);
 
   const submitMessage = async () => {
     const text = input.trim();

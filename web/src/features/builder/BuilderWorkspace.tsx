@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Download, FileCheck2, Focus, HelpCircle, Maximize2, Redo2, Sparkles, Trash2, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
+import { Compass, Download, FileCheck2, Focus, HelpCircle, Maximize2, Redo2, Sparkles, Trash2, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
 import { useApp } from '../../app/AppProviders';
 import { useProjectStore } from '../../app/store';
 import { usePresence } from '../../app/usePresence';
@@ -16,6 +16,11 @@ import { PrismaDiagram, type DiagramStage } from './PrismaDiagram';
 import { ChecklistPanel } from '../checklist/ChecklistPanel';
 import { ExportPanel } from '../export/ExportPanel';
 import { ImportWizard } from '../import/ImportWizard';
+import { GuidedTour } from '../tour/GuidedTour';
+import { tourSteps, type BuilderTab, type TourStep } from '../tour/steps';
+
+/** Opens or closes the Primi panel (listened to by PrismaAssistant). */
+const setAssistantOpen = (open: boolean) => window.dispatchEvent(new CustomEvent('prisma:assistant', { detail: { open } }));
 
 const fieldSections: { titleKey: TranslationKey; slug: string; fields: CountKey[] }[] = [
   { titleKey: 'sectionPrevious', slug: 'previous', fields: ['previousStudies', 'previousReports'] },
@@ -33,7 +38,8 @@ export function BuilderWorkspace() {
   const { ready, locale, t } = useApp();
   const { project, past, future, setProject, patchProject, updateCount, updateProject, undo, redo } = useProjectStore();
   const [selected, setSelected] = useState<CountKey>('databases');
-  const [tab, setTab] = useState<'data' | 'checklist' | 'export' | 'import'>('data');
+  const [tab, setTab] = useState<BuilderTab>('data');
+  const [touring, setTouring] = useState(false);
   const [zoom, setZoom] = useState(0.82);
   const [saveState, setSaveState] = useState<'saving' | 'saved'>('saved');
   const [confirmClear, setConfirmClear] = useState(false);
@@ -85,6 +91,27 @@ export function BuilderWorkspace() {
     const id = new URLSearchParams(window.location.search).get('project') ?? localStorage.getItem('prisma-last-project');
     if (id) getProject(id).then((saved) => saved && setProject(saved));
   }, [setProject]);
+
+  // `?tour=1` (the landing page link) starts the guided tour once.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('tour') !== '1') return;
+    url.searchParams.delete('tour');
+    window.history.replaceState(null, '', url);
+    const start = window.setTimeout(() => setTouring(true), 0);
+    return () => window.clearTimeout(start);
+  }, []);
+
+  const prepareTourStep = (step: TourStep) => {
+    if (step.tab) setTab(step.tab);
+    if (step.assistant) setAssistantOpen(step.assistant === 'open');
+  };
+
+  const closeTour = (completed: boolean) => {
+    setTouring(false);
+    setAssistantOpen(false);
+    if (completed) localStorage.setItem('prisma-tour-completed', '1');
+  };
 
   useEffect(() => {
     const saving = window.setTimeout(() => setSaveState('saving'), 0);
@@ -307,6 +334,7 @@ export function BuilderWorkspace() {
         <button type="button" onClick={() => workspaceRef.current?.requestFullscreen()} title={t('fullscreen')}><Maximize2 /><span>{t('fullscreen')}</span></button>
         <button type="button" onClick={() => setTab('export')} title={t('export')}><Download /><span>{t('export')}</span></button>
         <button type="button" onClick={() => window.print()} title={t('printPreview')}><FileCheck2 /><span>{t('printPreview')}</span></button>
+        <button type="button" onClick={() => setTouring(true)} disabled={!ready} title={t('tourStart')}><Compass /><span>{t('tourStart')}</span></button>
         <a href="/learn" title={t('help')}><HelpCircle /><span>{t('help')}</span></a>
         <button type="button" onClick={() => setConfirmClear(true)} title={t('clearAll')}><Trash2 /><span>{t('clearAll')}</span></button>
         <button type="button" onClick={loadExample} title={t('example')}><Sparkles /><span>{t('example')}</span></button>
@@ -521,6 +549,8 @@ export function BuilderWorkspace() {
           </aside>
         </div>
       )}
+
+      {touring && ready && <GuidedTour steps={tourSteps} onPrepare={prepareTourStep} onClose={closeTour} />}
 
       {clearModal.rendered && (
         <div className="modal-backdrop" role="presentation" data-state={clearModal.state}>

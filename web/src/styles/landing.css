@@ -70,3 +70,6 @@
   .home-intro { padding-inline: 1rem; }
   .independence-note { margin-inline: 1rem; }
 }
+.tour-link { display: flex; width: fit-content; align-items: center; gap: .45rem; margin: -1rem 0 2rem; color: var(--amber); font: 700 .66rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.tour-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 620px) { .tour-link { margin-top: -.5rem; } }

@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, Database, FileDown, Languages, LockKeyhole, Network, ScanSearch, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, Compass, Database, FileDown, Languages, LockKeyhole, Network, ScanSearch, ShieldCheck, Sparkles } from 'lucide-react';
 import { useApp } from '../app/AppProviders';
 import { createExampleChecklist } from '../domain/checklist';
 import { createProject } from '../domain/project';
@@ -262,6 +262,9 @@ export function LandingPage() {
               {text.secondary} ↘
             </a>
           </div>
+          <a className="tour-link" href="/builder?tour=1">
+            <Compass size={16} aria-hidden="true" /> {t('tourLandingCta')}
+          </a>
           <p className="scientata-app-badge">
             <a href="https://scientata.com" target="_blank" rel="noopener noreferrer">
               {t('scientataApp')}
