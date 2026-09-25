@@ -7,6 +7,9 @@
   NODE_VERSION = "22.13.0"
   PNPM_VERSION = "11.19.0"
 
+# connect-src lists the AI endpoints Primi calls straight from the browser (BYOK and
+# "Sign in with OpenRouter") plus local model servers such as Ollama. Keep it in sync
+# with web/src/features/assistant/providers.ts; tests/unit/csp.test.ts checks this.
 [[headers]]
   for = "/*"
   [headers.values]
@@ -14,7 +17,7 @@
     X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-    Content-Security-Policy = "default-src 'self'; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    Content-Security-Policy = "default-src 'self'; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com https://api.deepseek.com https://open.bigmodel.cn https://*.aliyuncs.com https://api.moonshot.ai https://api.minimax.io https://api.mistral.ai https://api.x.ai https://api.groq.com https://api.together.ai https://openrouter.ai http://localhost:* http://127.0.0.1:*; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 
 [[headers]]
   for = "/assets/*"
