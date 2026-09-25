@@ -210,7 +210,6 @@ const en = {
   assistantRemoveKey: 'Remove this key',
   assistantPlaceholder: "Ask about PRISMA or this project's data…",
   assistantSend: 'Send',
-  assistantClear: 'Clear conversation',
   assistantEmptyState: 'Ask about PRISMA 2020 or this project\'s data — or give Primi your numbers (e.g. “PubMed 320, Scopus 210, 85 duplicates”) and it will propose filling in the diagram for you to confirm.',
   assistantNoHistory: 'This conversation is not saved and disappears when you close it.',
   assistantScopeNote: "Primi only answers about PRISMA 2020 and this project's data.",
@@ -249,6 +248,10 @@ const en = {
   assistantOpenRouterManage: 'Manage or revoke the key on OpenRouter',
   assistantOpenRouterError: 'Could not finish signing in with OpenRouter. Please try again.',
   assistantConsentFirst: 'Tick the consent box above to continue.',
+  assistantNewChat: 'New conversation',
+  assistantNewChatTitle: 'Clear this conversation and start a new one?',
+  assistantNewChatBody: 'The messages in this conversation will be deleted and cannot be recovered. Changes already applied to the diagram are kept.',
+  assistantNewChatConfirm: 'Clear and start new',
   assistantOwnKeyDivider: 'or use your own API key (BYOK)',
 };
 
@@ -455,7 +458,6 @@ const pt: Record<TranslationKey, string> = {
   assistantRemoveKey: 'Remover esta chave',
   assistantPlaceholder: 'Pergunte sobre o PRISMA ou os dados deste projeto…',
   assistantSend: 'Enviar',
-  assistantClear: 'Limpar conversa',
   assistantEmptyState: 'Pergunte sobre o PRISMA 2020 ou os dados deste projeto — ou informe seus números (ex.: “PubMed 320, Scopus 210, 85 duplicatas”) e o Primi propõe o preenchimento do diagrama para você confirmar.',
   assistantNoHistory: 'Esta conversa não é salva e desaparece ao fechar.',
   assistantScopeNote: 'Primi responde apenas sobre o PRISMA 2020 e os dados deste projeto.',
@@ -494,6 +496,10 @@ const pt: Record<TranslationKey, string> = {
   assistantOpenRouterManage: 'Gerenciar ou revogar a chave no OpenRouter',
   assistantOpenRouterError: 'Não foi possível concluir o login com o OpenRouter. Tente novamente.',
   assistantConsentFirst: 'Marque o consentimento acima para continuar.',
+  assistantNewChat: 'Nova conversa',
+  assistantNewChatTitle: 'Limpar esta conversa e abrir uma nova?',
+  assistantNewChatBody: 'As mensagens desta conversa serão apagadas e não poderão ser recuperadas. As alterações já aplicadas ao diagrama são mantidas.',
+  assistantNewChatConfirm: 'Limpar e abrir nova',
   assistantOwnKeyDivider: 'ou use sua própria chave de API (BYOK)',
 };
 
@@ -715,6 +721,10 @@ const it: Record<TranslationKey, string> = {
   assistantOpenRouterManage: 'Gestisci o revoca la chiave su OpenRouter',
   assistantOpenRouterError: 'Impossibile completare l’accesso con OpenRouter. Riprova.',
   assistantConsentFirst: 'Seleziona il consenso qui sopra per continuare.',
+  assistantNewChat: 'Nuova conversazione',
+  assistantNewChatTitle: 'Cancellare questa conversazione e iniziarne una nuova?',
+  assistantNewChatBody: 'I messaggi di questa conversazione verranno eliminati e non potranno essere recuperati. Le modifiche già applicate al diagramma restano.',
+  assistantNewChatConfirm: 'Cancella e inizia',
   assistantOwnKeyDivider: 'oppure usa la tua chiave API (BYOK)',
 };
 
@@ -936,6 +946,10 @@ const fr: Record<TranslationKey, string> = {
   assistantOpenRouterManage: 'Gérer ou révoquer la clé sur OpenRouter',
   assistantOpenRouterError: 'Impossible de finaliser la connexion avec OpenRouter. Réessayez.',
   assistantConsentFirst: 'Cochez le consentement ci-dessus pour continuer.',
+  assistantNewChat: 'Nouvelle conversation',
+  assistantNewChatTitle: 'Effacer cette conversation et en commencer une nouvelle ?',
+  assistantNewChatBody: 'Les messages de cette conversation seront supprimés et ne pourront pas être récupérés. Les modifications déjà appliquées au diagramme sont conservées.',
+  assistantNewChatConfirm: 'Effacer et recommencer',
   assistantOwnKeyDivider: 'ou utilisez votre propre clé API (BYOK)',
 };
 
@@ -1157,6 +1171,10 @@ const de: Record<TranslationKey, string> = {
   assistantOpenRouterManage: 'Schlüssel bei OpenRouter verwalten oder widerrufen',
   assistantOpenRouterError: 'Die Anmeldung mit OpenRouter konnte nicht abgeschlossen werden. Bitte erneut versuchen.',
   assistantConsentFirst: 'Bestätigen Sie oben die Einwilligung, um fortzufahren.',
+  assistantNewChat: 'Neue Unterhaltung',
+  assistantNewChatTitle: 'Diese Unterhaltung löschen und eine neue beginnen?',
+  assistantNewChatBody: 'Die Nachrichten dieser Unterhaltung werden gelöscht und können nicht wiederhergestellt werden. Bereits auf das Diagramm angewendete Änderungen bleiben erhalten.',
+  assistantNewChatConfirm: 'Löschen und neu beginnen',
   assistantOwnKeyDivider: 'oder eigenen API-Schlüssel verwenden (BYOK)',
 };
 
@@ -1378,6 +1396,10 @@ const zh: Record<TranslationKey, string> = {
   assistantOpenRouterManage: '在 OpenRouter 管理或撤销密钥',
   assistantOpenRouterError: '无法完成 OpenRouter 登录，请重试。',
   assistantConsentFirst: '请先勾选上方的同意选项。',
+  assistantNewChat: '新对话',
+  assistantNewChatTitle: '清空当前对话并开始新对话？',
+  assistantNewChatBody: '当前对话中的消息将被删除且无法恢复。已应用到流程图的更改会保留。',
+  assistantNewChatConfirm: '清空并新建',
   assistantOwnKeyDivider: '或使用您自己的 API 密钥（BYOK）',
 };
 

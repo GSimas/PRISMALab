@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { AlertTriangle, CheckCircle2, Eye, EyeOff, Loader2, LogIn, Send, Settings, Sparkles, Trash2, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Eye, EyeOff, Loader2, LogIn, MessageSquarePlus, Send, Settings, Sparkles, X } from 'lucide-react';
 import { useApp } from '../app/AppProviders';
 import { useProjectStore } from '../app/store';
 import { usePresence } from '../app/usePresence';
@@ -43,6 +43,9 @@ export function PrismaAssistant() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [showKey, setShowKey] = useState(false);
+  const [confirmNewChat, setConfirmNewChat] = useState(false);
+  const newChatModal = usePresence(confirmNewChat);
+  const newChatCancelRef = useRef<HTMLButtonElement>(null);
 
   const [draftProvider, setDraftProvider] = useState<AssistantProviderId>('openai');
   const [draftApiKey, setDraftApiKey] = useState('');
@@ -52,6 +55,24 @@ export function PrismaAssistant() {
   const [oauthState, setOauthState] = useState<'idle' | 'redirecting' | 'connected' | 'error'>('idle');
 
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // The confirmation opens on the safe choice; Escape cancels it.
+  useEffect(() => {
+    if (!confirmNewChat) return;
+    newChatCancelRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.stopPropagation(); setConfirmNewChat(false); }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [confirmNewChat]);
+
+  const startNewChat = () => {
+    setMessages([]);
+    setInput('');
+    setOauthState((state) => (state === 'connected' ? 'idle' : state));
+    setConfirmNewChat(false);
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -346,12 +367,24 @@ export function PrismaAssistant() {
               </form>
               <div className="assistant-chat-footer">
                 <small>{t('assistantNoHistory')}</small>
-                <button type="button" className="text-button" onClick={() => setMessages([])} disabled={!messages.length}>
-                  <Trash2 size={12} aria-hidden="true" /> {t('assistantClear')}
+                <button type="button" className="text-button" onClick={() => setConfirmNewChat(true)} disabled={!messages.length || sending}>
+                  <MessageSquarePlus size={12} aria-hidden="true" /> {t('assistantNewChat')}
                 </button>
               </div>
             </div>
           )}
+        </div>
+      )}
+      {newChatModal.rendered && (
+        <div className="modal-backdrop" role="presentation" data-state={newChatModal.state} onClick={(event) => { if (event.target === event.currentTarget) setConfirmNewChat(false); }}>
+          <section className="modal" role="alertdialog" aria-modal="true" aria-labelledby="new-chat-title" aria-describedby="new-chat-body">
+            <h2 id="new-chat-title">{t('assistantNewChatTitle')}</h2>
+            <p id="new-chat-body">{t('assistantNewChatBody')}</p>
+            <div>
+              <button ref={newChatCancelRef} className="secondary-button" type="button" onClick={() => setConfirmNewChat(false)}>{t('cancel')}</button>
+              <button className="danger-button" type="button" onClick={startNewChat}>{t('assistantNewChatConfirm')}</button>
+            </div>
+          </section>
         </div>
       )}
     </>
