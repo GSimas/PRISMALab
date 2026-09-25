@@ -27,6 +27,14 @@
 .assistant-key-row input { flex: 1; }
 .assistant-key-row .icon-button { width: 40px; height: 40px; flex: 0 0 auto; }
 .assistant-settings-actions { display: flex; align-items: center; gap: 1rem; margin-top: .2rem; }
+.assistant-oauth { display: grid; gap: .55rem; padding: .8rem; border: 1px solid var(--line-strong); background: var(--paper-2); }
+.assistant-oauth > strong { color: var(--amber); font: 700 .62rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.assistant-oauth > p { margin: 0; color: var(--muted); font-size: .7rem; line-height: 1.5; }
+.assistant-oauth .primary-button { width: 100%; min-height: 42px; }
+.assistant-oauth small { color: var(--muted); font-size: .64rem; }
+.assistant-oauth-status { display: flex; align-items: center; gap: .4rem; margin: 0; color: var(--green) !important; font-size: .72rem; font-weight: 700; }
+.assistant-divider { display: flex; align-items: center; gap: .6rem; margin: .2rem 0 0; color: var(--muted); font: 700 .58rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.assistant-divider::before, .assistant-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 
 .assistant-chat { display: grid; grid-template-rows: 1fr auto auto; min-height: 0; }
 .assistant-messages { display: grid; align-content: start; gap: .6rem; overflow-y: auto; padding: 1rem; }

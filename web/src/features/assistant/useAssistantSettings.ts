@@ -57,8 +57,20 @@ export function useAssistantSettings() {
 
   const setConsent = (consent: boolean) => setSettings((s) => ({ ...s, consent }));
 
+  /** Stores the key from "Sign in with OpenRouter" and makes OpenRouter the active provider. */
+  const connectOpenRouter = (apiKey: string) =>
+    setSettings((s) => ({
+      ...s,
+      consent: true,
+      activeProvider: 'openrouter',
+      providers: {
+        ...s.providers,
+        openrouter: { ...s.providers.openrouter, apiKey, model: s.providers.openrouter?.model || assistantProviderMeta('openrouter').defaultModel, oauth: true },
+      },
+    }));
+
   const activeConfig = settings.providers[settings.activeProvider];
   const isConfigured = isProviderConfigured(assistantProviderMeta(settings.activeProvider), activeConfig);
 
-  return { ready, settings, activeConfig, isConfigured, setActiveProvider, updateProvider, clearProvider, setConsent };
+  return { ready, settings, activeConfig, isConfigured, setActiveProvider, updateProvider, clearProvider, setConsent, connectOpenRouter };
 }

@@ -205,7 +205,7 @@ const en = {
   assistantModel: 'Model',
   assistantBaseUrl: 'Endpoint URL (OpenAI-compatible)',
   assistantGetKey: 'Get an API key',
-  assistantConsent: "I understand this project's data will be sent to the selected AI provider using my own key.",
+  assistantConsent: "I understand this project's data will be sent to the AI provider I choose.",
   assistantSaveKey: 'Save and activate',
   assistantRemoveKey: 'Remove this key',
   assistantPlaceholder: "Ask about PRISMA or this project's data…",
@@ -240,6 +240,15 @@ const en = {
   tourProgress: 'Step {current} of {total}',
   tourClose: 'Close tour',
   tourLandingCta: 'Take the guided tour',
+  assistantNoKeyTitle: 'No API key needed',
+  assistantOpenRouterHint: 'Sign in with your OpenRouter account and authorize PRISMA Lab. A key is created for you and kept only in this browser; usage is billed to your OpenRouter credits (free models are available).',
+  assistantOpenRouterLogin: 'Sign in with OpenRouter',
+  assistantOpenRouterConnected: 'Connected with your OpenRouter account.',
+  assistantOpenRouterDisconnect: 'Disconnect',
+  assistantOpenRouterManage: 'Manage or revoke the key on OpenRouter',
+  assistantOpenRouterError: 'Could not finish signing in with OpenRouter. Please try again.',
+  assistantConsentFirst: 'Tick the consent box above to continue.',
+  assistantOwnKeyDivider: 'or use your own API key (BYOK)',
 };
 
 export type TranslationKey = keyof typeof en;
@@ -440,7 +449,7 @@ const pt: Record<TranslationKey, string> = {
   assistantModel: 'Modelo',
   assistantBaseUrl: 'URL do endpoint (compatível com OpenAI)',
   assistantGetKey: 'Obter uma chave de API',
-  assistantConsent: 'Entendo que os dados deste projeto serão enviados ao provedor de IA selecionado usando minha própria chave.',
+  assistantConsent: 'Entendo que os dados deste projeto serão enviados ao provedor de IA escolhido.',
   assistantSaveKey: 'Salvar e ativar',
   assistantRemoveKey: 'Remover esta chave',
   assistantPlaceholder: 'Pergunte sobre o PRISMA ou os dados deste projeto…',
@@ -475,6 +484,15 @@ const pt: Record<TranslationKey, string> = {
   tourProgress: 'Passo {current} de {total}',
   tourClose: 'Fechar tour',
   tourLandingCta: 'Fazer o tour guiado',
+  assistantNoKeyTitle: 'Sem chave de API',
+  assistantOpenRouterHint: 'Entre com sua conta OpenRouter e autorize o PRISMA Lab. Uma chave é criada para você e guardada só neste navegador; o uso é cobrado dos seus créditos no OpenRouter (há modelos gratuitos).',
+  assistantOpenRouterLogin: 'Entrar com OpenRouter',
+  assistantOpenRouterConnected: 'Conectado com sua conta OpenRouter.',
+  assistantOpenRouterDisconnect: 'Desconectar',
+  assistantOpenRouterManage: 'Gerenciar ou revogar a chave no OpenRouter',
+  assistantOpenRouterError: 'Não foi possível concluir o login com o OpenRouter. Tente novamente.',
+  assistantConsentFirst: 'Marque o consentimento acima para continuar.',
+  assistantOwnKeyDivider: 'ou use sua própria chave de API (BYOK)',
 };
 
 const it: Record<TranslationKey, string> = {
@@ -685,6 +703,16 @@ const it: Record<TranslationKey, string> = {
   tourProgress: 'Passo {current} di {total}',
   tourClose: 'Chiudi il tour',
   tourLandingCta: 'Fai il tour guidato',
+  assistantConsent: 'Comprendo che i dati di questo progetto saranno inviati al provider di IA scelto.',
+  assistantNoKeyTitle: 'Nessuna chiave API necessaria',
+  assistantOpenRouterHint: 'Accedi con il tuo account OpenRouter e autorizza PRISMA Lab. Viene creata una chiave conservata solo in questo browser; l’uso è addebitato sui tuoi crediti OpenRouter (sono disponibili modelli gratuiti).',
+  assistantOpenRouterLogin: 'Accedi con OpenRouter',
+  assistantOpenRouterConnected: 'Connesso con il tuo account OpenRouter.',
+  assistantOpenRouterDisconnect: 'Disconnetti',
+  assistantOpenRouterManage: 'Gestisci o revoca la chiave su OpenRouter',
+  assistantOpenRouterError: 'Impossibile completare l’accesso con OpenRouter. Riprova.',
+  assistantConsentFirst: 'Seleziona il consenso qui sopra per continuare.',
+  assistantOwnKeyDivider: 'oppure usa la tua chiave API (BYOK)',
 };
 
 const fr: Record<TranslationKey, string> = {
@@ -895,6 +923,16 @@ const fr: Record<TranslationKey, string> = {
   tourProgress: 'Étape {current} sur {total}',
   tourClose: 'Fermer la visite',
   tourLandingCta: 'Suivre la visite guidée',
+  assistantConsent: 'Je comprends que les données de ce projet seront envoyées au fournisseur d’IA choisi.',
+  assistantNoKeyTitle: 'Sans clé API',
+  assistantOpenRouterHint: 'Connectez-vous avec votre compte OpenRouter et autorisez PRISMA Lab. Une clé est créée pour vous et conservée uniquement dans ce navigateur ; l’usage est débité de vos crédits OpenRouter (des modèles gratuits existent).',
+  assistantOpenRouterLogin: 'Se connecter avec OpenRouter',
+  assistantOpenRouterConnected: 'Connecté avec votre compte OpenRouter.',
+  assistantOpenRouterDisconnect: 'Se déconnecter',
+  assistantOpenRouterManage: 'Gérer ou révoquer la clé sur OpenRouter',
+  assistantOpenRouterError: 'Impossible de finaliser la connexion avec OpenRouter. Réessayez.',
+  assistantConsentFirst: 'Cochez le consentement ci-dessus pour continuer.',
+  assistantOwnKeyDivider: 'ou utilisez votre propre clé API (BYOK)',
 };
 
 const de: Record<TranslationKey, string> = {
@@ -1105,6 +1143,16 @@ const de: Record<TranslationKey, string> = {
   tourProgress: 'Schritt {current} von {total}',
   tourClose: 'Tour schließen',
   tourLandingCta: 'Geführte Tour starten',
+  assistantConsent: 'Ich verstehe, dass die Daten dieses Projekts an den gewählten KI-Anbieter gesendet werden.',
+  assistantNoKeyTitle: 'Kein API-Schlüssel nötig',
+  assistantOpenRouterHint: 'Melden Sie sich mit Ihrem OpenRouter-Konto an und autorisieren Sie PRISMA Lab. Ein Schlüssel wird für Sie erstellt und nur in diesem Browser gespeichert; die Nutzung wird Ihrem OpenRouter-Guthaben belastet (kostenlose Modelle verfügbar).',
+  assistantOpenRouterLogin: 'Mit OpenRouter anmelden',
+  assistantOpenRouterConnected: 'Mit Ihrem OpenRouter-Konto verbunden.',
+  assistantOpenRouterDisconnect: 'Trennen',
+  assistantOpenRouterManage: 'Schlüssel bei OpenRouter verwalten oder widerrufen',
+  assistantOpenRouterError: 'Die Anmeldung mit OpenRouter konnte nicht abgeschlossen werden. Bitte erneut versuchen.',
+  assistantConsentFirst: 'Bestätigen Sie oben die Einwilligung, um fortzufahren.',
+  assistantOwnKeyDivider: 'oder eigenen API-Schlüssel verwenden (BYOK)',
 };
 
 const zh: Record<TranslationKey, string> = {
@@ -1315,6 +1363,16 @@ const zh: Record<TranslationKey, string> = {
   tourProgress: '第 {current} 步，共 {total} 步',
   tourClose: '关闭导览',
   tourLandingCta: '开始导览',
+  assistantConsent: '我了解本项目的数据将被发送至所选的 AI 服务商。',
+  assistantNoKeyTitle: '无需 API 密钥',
+  assistantOpenRouterHint: '使用您的 OpenRouter 账户登录并授权 PRISMA Lab。系统会为您创建一个密钥，仅保存在本浏览器中；用量从您的 OpenRouter 额度中扣除（提供免费模型）。',
+  assistantOpenRouterLogin: '使用 OpenRouter 登录',
+  assistantOpenRouterConnected: '已连接您的 OpenRouter 账户。',
+  assistantOpenRouterDisconnect: '断开连接',
+  assistantOpenRouterManage: '在 OpenRouter 管理或撤销密钥',
+  assistantOpenRouterError: '无法完成 OpenRouter 登录，请重试。',
+  assistantConsentFirst: '请先勾选上方的同意选项。',
+  assistantOwnKeyDivider: '或使用您自己的 API 密钥（BYOK）',
 };
 
 export const translations: Record<Locale, Record<TranslationKey, string>> = {

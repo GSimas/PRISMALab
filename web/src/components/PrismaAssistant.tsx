@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { AlertTriangle, Eye, EyeOff, Loader2, Send, Settings, Sparkles, Trash2, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Eye, EyeOff, Loader2, LogIn, Send, Settings, Sparkles, Trash2, X } from 'lucide-react';
 import { useApp } from '../app/AppProviders';
 import { useProjectStore } from '../app/store';
 import { usePresence } from '../app/usePresence';
@@ -10,6 +10,7 @@ import { assistantProviderMeta, assistantProviders, isProviderConfigured } from 
 import { useAssistantSettings } from '../features/assistant/useAssistantSettings';
 import { buildAssistantSystemPrompt, buildProjectContext } from '../features/assistant/context';
 import { sendAssistantMessage } from '../features/assistant/client';
+import { completeOpenRouterLogin, startOpenRouterLogin } from '../features/assistant/openrouterAuth';
 import { extractProposal, planProposal } from '../features/assistant/proposals';
 import { Markdown } from '../features/assistant/Markdown';
 import { ProposalCard } from '../features/assistant/ProposalCard';
@@ -32,7 +33,7 @@ export function PrismaAssistant() {
   const patchProject = useProjectStore((state) => state.patchProject);
   // Proposals can only be applied where the project is loaded and saved: the builder.
   const canApply = usePathname()?.replace(/\/$/, '') === '/builder';
-  const { ready, settings, activeConfig, isConfigured, setActiveProvider, updateProvider, clearProvider, setConsent } = useAssistantSettings();
+  const { ready, settings, activeConfig, isConfigured, setActiveProvider, updateProvider, clearProvider, setConsent, connectOpenRouter } = useAssistantSettings();
 
   const [open, setOpen] = useState(false);
   const panel = usePresence(open);
@@ -47,6 +48,7 @@ export function PrismaAssistant() {
   const [draftModel, setDraftModel] = useState('');
   const [draftBaseUrl, setDraftBaseUrl] = useState('');
   const [draftConsent, setDraftConsent] = useState(false);
+  const [oauthState, setOauthState] = useState<'idle' | 'redirecting' | 'connected' | 'error'>('idle');
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -73,7 +75,10 @@ export function PrismaAssistant() {
   };
 
   const handleSave = () => {
-    updateProvider(draftProvider, { apiKey: draftApiKey.trim(), model: draftModel.trim(), baseUrl: draftBaseUrl.trim() || undefined });
+    const existing = settings.providers[draftProvider];
+    // A key obtained by signing in stays flagged as such until the user replaces it.
+    const oauth = !!existing?.oauth && existing.apiKey === draftApiKey.trim();
+    updateProvider(draftProvider, { apiKey: draftApiKey.trim(), model: draftModel.trim(), baseUrl: draftBaseUrl.trim() || undefined, oauth });
     setActiveProvider(draftProvider);
     setConsent(draftConsent);
     setView('chat');
@@ -92,6 +97,49 @@ export function PrismaAssistant() {
     setOpen(next);
   };
   const toggleOpen = () => setPanelOpen(!open);
+
+  const openRouter = settings.providers.openrouter;
+  const openRouterConnected = !!openRouter?.oauth && !!openRouter.apiKey;
+
+  const signInWithOpenRouter = async () => {
+    setConsent(true);
+    setOauthState('redirecting');
+    try {
+      await startOpenRouterLogin();
+    } catch {
+      setOauthState('error');
+    }
+  };
+
+  const disconnectOpenRouter = () => {
+    clearProvider('openrouter');
+    setOauthState('idle');
+    if (draftProvider === 'openrouter') setDraftApiKey('');
+  };
+
+  // Back from OpenRouter (`?code=`): exchange the code for a key and open Primi.
+  const connectRef = useRef(connectOpenRouter);
+  const enterSettingsRef = useRef(enterSettingsView);
+  useEffect(() => {
+    connectRef.current = connectOpenRouter;
+    enterSettingsRef.current = enterSettingsView;
+  });
+  useEffect(() => {
+    if (!ready) return;
+    completeOpenRouterLogin()
+      .then((key) => {
+        if (!key) return;
+        connectRef.current(key);
+        setOauthState('connected');
+        setView('chat');
+        setOpen(true);
+      })
+      .catch(() => {
+        setOauthState('error');
+        enterSettingsRef.current();
+        setOpen(true);
+      });
+  }, [ready]);
 
   // Other features (the guided tour) open or close the panel via a window event.
   const setPanelOpenRef = useRef(setPanelOpen);
@@ -172,6 +220,36 @@ export function PrismaAssistant() {
           {view === 'settings' ? (
             <div className="assistant-settings">
               <p className="assistant-disclosure"><AlertTriangle size={13} aria-hidden="true" /> {t('assistantScopeNote')}</p>
+
+              <label className="check-row">
+                <input type="checkbox" checked={draftConsent} onChange={(event) => setDraftConsent(event.target.checked)} />
+                {t('assistantConsent')}
+              </label>
+
+              <section className="assistant-oauth" aria-labelledby="assistant-oauth-title">
+                <strong id="assistant-oauth-title">{t('assistantNoKeyTitle')}</strong>
+                {openRouterConnected ? (
+                  <>
+                    <p className="assistant-oauth-status"><CheckCircle2 size={14} aria-hidden="true" /> {t('assistantOpenRouterConnected')}</p>
+                    <div className="assistant-settings-actions">
+                      <button type="button" className="text-button" onClick={disconnectOpenRouter}>{t('assistantOpenRouterDisconnect')}</button>
+                      <a className="source-link" href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener noreferrer">{t('assistantOpenRouterManage')} ↗</a>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p>{t('assistantOpenRouterHint')}</p>
+                    <button type="button" className="primary-button" disabled={!draftConsent || oauthState === 'redirecting'} onClick={() => void signInWithOpenRouter()}>
+                      {oauthState === 'redirecting' ? <Loader2 size={15} className="assistant-spin" aria-hidden="true" /> : <LogIn size={15} aria-hidden="true" />} {t('assistantOpenRouterLogin')}
+                    </button>
+                    {!draftConsent && <small>{t('assistantConsentFirst')}</small>}
+                  </>
+                )}
+                {oauthState === 'error' && <p className="field-error" role="alert">{t('assistantOpenRouterError')}</p>}
+              </section>
+
+              <p className="assistant-divider"><span>{t('assistantOwnKeyDivider')}</span></p>
+
               <label>
                 {t('assistantProvider')}
                 <select value={draftProvider} onChange={(event) => resetDraftForProvider(event.target.value as AssistantProviderId)}>
@@ -217,11 +295,6 @@ export function PrismaAssistant() {
                 <a className="source-link" href={draftMeta.keyUrl} target="_blank" rel="noopener noreferrer">{t('assistantGetKey')} ↗</a>
               )}
 
-              <label className="check-row">
-                <input type="checkbox" checked={draftConsent} onChange={(event) => setDraftConsent(event.target.checked)} />
-                {t('assistantConsent')}
-              </label>
-
               <div className="assistant-settings-actions">
                 <button type="button" className="primary-button" disabled={!canSave} onClick={handleSave}>{t('assistantSaveKey')}</button>
                 {settings.providers[draftProvider] && (
@@ -232,6 +305,7 @@ export function PrismaAssistant() {
           ) : (
             <div className="assistant-chat">
               <div className="assistant-messages" ref={scrollRef}>
+                {oauthState === 'connected' && <p className="assistant-oauth-status" role="status"><CheckCircle2 size={14} aria-hidden="true" /> {t('assistantOpenRouterConnected')}</p>}
                 {messages.length === 0 && <p className="assistant-empty">{t('assistantEmptyState')}</p>}
                 {messages.map((message) => (
                   <div key={message.id} className={`assistant-message ${message.role}`}>

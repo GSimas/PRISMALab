@@ -8,6 +8,8 @@ export interface AssistantProviderConfig {
   apiKey: string;
   model: string;
   baseUrl?: string;
+  /** The key came from "Sign in with OpenRouter" rather than being pasted by the user. */
+  oauth?: boolean;
 }
 
 export interface AssistantSettings {
