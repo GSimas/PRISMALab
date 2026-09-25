@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { assistantProviderMeta, isProviderConfigured } from './providers';
 import type { AssistantProviderConfig, AssistantProviderId, AssistantSettings } from './types';
 
 const STORAGE_KEY = 'prisma-assistant-settings-v1';
@@ -57,7 +58,7 @@ export function useAssistantSettings() {
   const setConsent = (consent: boolean) => setSettings((s) => ({ ...s, consent }));
 
   const activeConfig = settings.providers[settings.activeProvider];
-  const isConfigured = !!activeConfig?.apiKey.trim() && (settings.activeProvider !== 'custom' || !!activeConfig.baseUrl?.trim());
+  const isConfigured = isProviderConfigured(assistantProviderMeta(settings.activeProvider), activeConfig);
 
   return { ready, settings, activeConfig, isConfigured, setActiveProvider, updateProvider, clearProvider, setConsent };
 }

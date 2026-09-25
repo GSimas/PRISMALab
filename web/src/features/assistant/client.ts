@@ -1,5 +1,7 @@
 'use client';
 
+import { describeProposalDecisions } from './proposals';
+import { assistantProviderMeta, isProviderConfigured, resolveBaseUrl, type AssistantProviderMeta } from './providers';
 import { AssistantError, type AssistantMessage, type AssistantProviderConfig, type AssistantProviderId } from './types';
 
 interface SendParams {
@@ -9,7 +11,9 @@ interface SendParams {
   history: AssistantMessage[];
 }
 
-const TIMEOUT_MS = 30000;
+const TIMEOUT_MS = 60000;
+// Leaves room for reasoning models, which spend output tokens before answering.
+const MAX_OUTPUT_TOKENS = 4000;
 
 async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
   const controller = new AbortController();
@@ -36,24 +40,31 @@ async function readErrorBody(response: Response): Promise<string> {
   }
 }
 
-const toOpenAiMessages = (systemPrompt: string, history: AssistantMessage[]) => [
-  { role: 'system', content: systemPrompt },
-  ...history.filter((m) => m.role !== 'error').map((m) => ({ role: m.role, content: m.content })),
-];
+// Replies go back exactly as the model wrote them (proposal block included) so it
+// keeps seeing the correct protocol; the user's decisions go in the system prompt.
+export const conversation = (history: AssistantMessage[]) =>
+  history
+    .filter((m) => m.role !== 'error')
+    .map((m) => ({ role: m.role as 'user' | 'assistant', content: (m.role === 'assistant' && m.raw) || m.content || '…' }));
 
-async function sendOpenAiCompatible(baseUrl: string, config: AssistantProviderConfig, systemPrompt: string, history: AssistantMessage[], extraHeaders: Record<string, string> = {}): Promise<string> {
-  const response = await fetchWithTimeout(`${baseUrl.replace(/\/$/, '')}/chat/completions`, {
+/** System prompt plus the decisions on earlier proposals, when there are any. */
+export const withDecisions = (systemPrompt: string, history: AssistantMessage[]) => {
+  const decisions = describeProposalDecisions(history);
+  return decisions ? `${systemPrompt}\n\n${decisions}` : systemPrompt;
+};
+
+async function sendOpenAiCompatible(meta: AssistantProviderMeta, config: AssistantProviderConfig, systemPrompt: string, history: AssistantMessage[]): Promise<string> {
+  const headers: Record<string, string> = { 'content-type': 'application/json' };
+  if (config.apiKey.trim()) headers.authorization = `Bearer ${config.apiKey}`;
+  if (meta.id === 'openrouter') Object.assign(headers, { 'HTTP-Referer': window.location.origin, 'X-Title': 'PRISMA Lab' });
+  const limits = meta.modernOpenAiParams ? { max_completion_tokens: MAX_OUTPUT_TOKENS } : { max_tokens: MAX_OUTPUT_TOKENS, temperature: 0.3 };
+  const response = await fetchWithTimeout(`${resolveBaseUrl(meta, config.baseUrl).replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${config.apiKey}`,
-      ...extraHeaders,
-    },
+    headers,
     body: JSON.stringify({
       model: config.model,
-      messages: toOpenAiMessages(systemPrompt, history),
-      max_tokens: 800,
-      temperature: 0.3,
+      messages: [{ role: 'system', content: systemPrompt }, ...conversation(history)],
+      ...limits,
     }),
   });
   if (!response.ok) {
@@ -78,8 +89,8 @@ async function sendAnthropic(config: AssistantProviderConfig, systemPrompt: stri
     body: JSON.stringify({
       model: config.model,
       system: systemPrompt,
-      max_tokens: 800,
-      messages: history.filter((m) => m.role !== 'error').map((m) => ({ role: m.role, content: m.content })),
+      max_tokens: MAX_OUTPUT_TOKENS,
+      messages: conversation(history),
     }),
   });
   if (!response.ok) {
@@ -99,10 +110,8 @@ async function sendGoogle(config: AssistantProviderConfig, systemPrompt: string,
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: systemPrompt }] },
-      contents: history
-        .filter((m) => m.role !== 'error')
-        .map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
-      generationConfig: { maxOutputTokens: 800, temperature: 0.3 },
+      contents: conversation(history).map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
+      generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS, temperature: 0.3 },
     }),
   });
   if (!response.ok) {
@@ -117,24 +126,16 @@ async function sendGoogle(config: AssistantProviderConfig, systemPrompt: string,
 }
 
 export async function sendAssistantMessage({ providerId, config, systemPrompt, history }: SendParams): Promise<string> {
-  if (!config.apiKey.trim()) throw new AssistantError('missing-key', 'Missing API key.');
-  if (providerId === 'custom' && !config.baseUrl?.trim()) throw new AssistantError('missing-key', 'Missing base URL.');
+  const meta = assistantProviderMeta(providerId);
+  if (!isProviderConfigured(meta, config)) throw new AssistantError('missing-key', 'Provider is not fully configured.');
+  const system = withDecisions(systemPrompt, history);
 
-  switch (providerId) {
-    case 'openai':
-      return sendOpenAiCompatible('https://api.openai.com/v1', config, systemPrompt, history);
-    case 'openrouter':
-      return sendOpenAiCompatible('https://openrouter.ai/api/v1', config, systemPrompt, history, {
-        'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : '',
-        'X-Title': 'PRISMA Lab',
-      });
-    case 'custom':
-      return sendOpenAiCompatible(config.baseUrl!, config, systemPrompt, history);
+  switch (meta.protocol) {
     case 'anthropic':
-      return sendAnthropic(config, systemPrompt, history);
+      return sendAnthropic(config, system, history);
     case 'google':
-      return sendGoogle(config, systemPrompt, history);
+      return sendGoogle(config, system, history);
     default:
-      throw new AssistantError('missing-key', 'Unknown provider.');
+      return sendOpenAiCompatible(meta, config, system, history);
   }
 }

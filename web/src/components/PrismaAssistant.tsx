@@ -1,14 +1,18 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { AlertTriangle, Eye, EyeOff, Loader2, Send, Settings, Sparkles, Trash2, X } from 'lucide-react';
 import { useApp } from '../app/AppProviders';
 import { useProjectStore } from '../app/store';
 import { usePresence } from '../app/usePresence';
-import { assistantProviderMeta, assistantProviders } from '../features/assistant/providers';
+import { assistantProviderMeta, assistantProviders, isProviderConfigured } from '../features/assistant/providers';
 import { useAssistantSettings } from '../features/assistant/useAssistantSettings';
 import { buildAssistantSystemPrompt, buildProjectContext } from '../features/assistant/context';
 import { sendAssistantMessage } from '../features/assistant/client';
+import { extractProposal, planProposal } from '../features/assistant/proposals';
+import { Markdown } from '../features/assistant/Markdown';
+import { ProposalCard } from '../features/assistant/ProposalCard';
 import { AssistantError, type AssistantMessage, type AssistantProviderId } from '../features/assistant/types';
 import type { TranslationKey } from '../i18n/translations';
 
@@ -25,6 +29,9 @@ const errorKeyFor = (reason: AssistantError['reason']) => errorMessageKeys[reaso
 export function PrismaAssistant() {
   const { locale, t } = useApp();
   const project = useProjectStore((state) => state.project);
+  const patchProject = useProjectStore((state) => state.patchProject);
+  // Proposals can only be applied where the project is loaded and saved: the builder.
+  const canApply = usePathname()?.replace(/\/$/, '') === '/builder';
   const { ready, settings, activeConfig, isConfigured, setActiveProvider, updateProvider, clearProvider, setConsent } = useAssistantSettings();
 
   const [open, setOpen] = useState(false);
@@ -48,7 +55,7 @@ export function PrismaAssistant() {
   }, [messages, sending]);
 
   const draftMeta = assistantProviderMeta(draftProvider);
-  const canSave = draftApiKey.trim().length > 0 && draftModel.trim().length > 0 && draftConsent && (!draftMeta.needsBaseUrl || draftBaseUrl.trim().length > 0);
+  const canSave = draftConsent && isProviderConfigured(draftMeta, { apiKey: draftApiKey, model: draftModel, baseUrl: draftBaseUrl });
 
   const resetDraftForProvider = (id: AssistantProviderId) => {
     const meta = assistantProviderMeta(id);
@@ -56,7 +63,7 @@ export function PrismaAssistant() {
     setDraftProvider(id);
     setDraftApiKey(existing?.apiKey ?? '');
     setDraftModel(existing?.model ?? meta.defaultModel);
-    setDraftBaseUrl(existing?.baseUrl ?? '');
+    setDraftBaseUrl(existing?.baseUrl ?? (meta.editableBaseUrl ? meta.baseUrl ?? '' : ''));
   };
 
   const enterSettingsView = () => {
@@ -102,13 +109,29 @@ export function PrismaAssistant() {
         systemPrompt,
         history: nextMessages.slice(-MAX_HISTORY),
       });
-      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: reply, at: new Date().toISOString() }]);
+      const { text: content, proposal, invalid } = extractProposal(reply);
+      setMessages((prev) => [...prev, {
+        id: crypto.randomUUID(), role: 'assistant', content, raw: reply, at: new Date().toISOString(),
+        ...(proposal ? { proposal, proposalStatus: 'pending' as const } : {}),
+        ...(invalid ? { proposalInvalid: true } : {}),
+      }]);
     } catch (error) {
       const reason = error instanceof AssistantError ? error.reason : 'network';
       setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'error', content: t(errorKeyFor(reason)), at: new Date().toISOString() }]);
     } finally {
       setSending(false);
     }
+  };
+
+  const updateMessage = (id: string, patch: Partial<AssistantMessage>) =>
+    setMessages((prev) => prev.map((message) => (message.id === id ? { ...message, ...patch } : message)));
+
+  const applyProposal = (message: AssistantMessage) => {
+    if (!message.proposal) return;
+    // Re-plan against the live project so the patch reflects its latest state.
+    const { patch, changes } = planProposal(useProjectStore.getState().project, message.proposal);
+    if (changes.length) patchProject(patch, 'Preenchimento sugerido pelo Primi');
+    updateMessage(message.id, { proposalStatus: 'applied', appliedChanges: changes });
   };
 
   if (!ready) return null;
@@ -147,10 +170,12 @@ export function PrismaAssistant() {
                 </select>
               </label>
 
-              {draftMeta.needsBaseUrl && (
+              {draftMeta.noteKey && <p className="assistant-disclosure">{t(draftMeta.noteKey)}</p>}
+
+              {draftMeta.editableBaseUrl && (
                 <label>
                   {t('assistantBaseUrl')}
-                  <input value={draftBaseUrl} onChange={(event) => setDraftBaseUrl(event.target.value)} placeholder="https://your-endpoint/v1" autoComplete="off" />
+                  <input value={draftBaseUrl} onChange={(event) => setDraftBaseUrl(event.target.value)} placeholder={draftMeta.baseUrl ?? 'https://your-endpoint/v1'} autoComplete="off" />
                 </label>
               )}
 
@@ -200,7 +225,15 @@ export function PrismaAssistant() {
                 {messages.map((message) => (
                   <div key={message.id} className={`assistant-message ${message.role}`}>
                     {message.role === 'error' && <AlertTriangle size={13} aria-hidden="true" />}
-                    <p>{message.content}</p>
+                    {message.content && (message.role === 'assistant' ? <Markdown text={message.content} /> : <p>{message.content}</p>)}
+                    {message.proposalInvalid && <p className="assistant-proposal-invalid">{t('assistantProposalInvalid')}</p>}
+                    <ProposalCard
+                      message={message}
+                      project={project}
+                      canApply={canApply}
+                      onApply={() => applyProposal(message)}
+                      onDiscard={() => updateMessage(message.id, { proposalStatus: 'discarded' })}
+                    />
                   </div>
                 ))}
                 {sending && (
