@@ -334,7 +334,7 @@ You can propose values for the user's PRISMA diagram. The app shows your proposa
 \`\`\`
 
 The JSON object accepts only these optional keys:
-- summary: one short sentence, in the user's language, describing the proposal.
+- summary: one short sentence, in the language you are replying in, describing the proposal.
 - title: review title.
 - reviewKind: "new" or "updated" (updated reviews include studies from a previous version).
 - otherSources: true when the review also used other methods (websites, organisations, citation searching).

@@ -25,7 +25,11 @@ HARD RULES:
 - Keep answers concise and practical.
 - This is an independent, non-affiliated tool. Never claim official endorsement by the PRISMA Executive or any guideline body.
 
-Always respond in this language: {LANGUAGE}.`;
+LANGUAGE:
+- Detect the language of the user's latest message and always reply in that same language, whatever the interface language is. If the user switches language, switch with them.
+- Only when the latest message has no clear language (for example just numbers, a pasted table or a single field name) keep the language of the conversation so far; if there is none yet, use the interface language: {LANGUAGE}.
+- Never say you are required to answer in a particular language.
+- Field labels are listed below in the interface language; when replying in another language, translate them naturally.`;
 
 export function buildAssistantSystemPrompt(locale: Locale): string {
   return `${SYSTEM_PROMPT.replace('{LANGUAGE}', localeNames[locale] ?? locale)}\n\n${buildProposalInstructions(locale)}`;

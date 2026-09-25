@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { calculateProject } from '../../src/domain/calculations';
 import { createProject } from '../../src/domain/project';
 import { assistantProviderMeta, isProviderConfigured, resolveBaseUrl } from '../../src/features/assistant/providers';
+import { buildAssistantSystemPrompt } from '../../src/features/assistant/context';
 import { extractProposal, planProposal } from '../../src/features/assistant/proposals';
 
 const reply = (json: string) => `Vou preencher as bases informadas.\n\n\`\`\`prisma-update\n${json}\n\`\`\``;
@@ -74,5 +75,14 @@ describe('provedores do Primi', () => {
   it('só permite trocar o endpoint em provedores editáveis', () => {
     expect(resolveBaseUrl(assistantProviderMeta('zhipu'), 'https://evil.example')).toBe('https://open.bigmodel.cn/api/paas/v4');
     expect(resolveBaseUrl(assistantProviderMeta('qwen'), 'https://dashscope-us.aliyuncs.com/compatible-mode/v1')).toBe('https://dashscope-us.aliyuncs.com/compatible-mode/v1');
+  });
+});
+
+describe('idioma das respostas do Primi', () => {
+  it('responde na língua do usuário e usa a da interface só como padrão', () => {
+    const prompt = buildAssistantSystemPrompt('en');
+    expect(prompt).toMatch(/language of the user's latest message/);
+    expect(prompt).toMatch(/use the interface language: English/);
+    expect(prompt).not.toMatch(/Always respond in this language/);
   });
 });
