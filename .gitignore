@@ -12,3 +12,4 @@ web/tsconfig.tsbuildinfo
 *.zip
 .env*
 !.env.example
+.claude/
