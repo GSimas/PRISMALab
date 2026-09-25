@@ -60,13 +60,18 @@
 ::view-transition-group(root) { animation-duration: var(--motion-base); }
 .global-header { view-transition-name: site-header; }
 .coffee-button { view-transition-name: coffee-button; }
+.about-tabs { view-transition-name: about-tabs; }
+.about-tab-indicator { view-transition-name: about-tab-indicator; }
+::view-transition-group(about-tab-indicator) { animation-duration: var(--motion-slow); animation-timing-function: var(--ease-out); }
 
 :where(#main-content) > * { animation: rise-in var(--motion-page) var(--ease-out) backwards; }
 :where(#main-content) > :nth-child(2) { animation-delay: 60ms; }
 :where(#main-content) > :nth-child(3) { animation-delay: 120ms; }
 :where(#main-content) > :nth-child(n + 4) { animation-delay: 180ms; }
 /* Persistent chrome and hero regions handle their own motion. */
-.landing-page > .hero { animation: none; }
+#main-content > .about-tabs, .landing-page > .hero { animation: none; }
+/* About tabs swap their panel in place; replay the entrance on each switch. */
+.about-panel { animation: rise-in var(--motion-slow) var(--ease-out); }
 /* Builder tab panels mount on tab switch: animate them without the page stagger. */
 .builder-page > .single-module, .builder-page > .builder-workspace { animation-delay: 0ms; }
 
@@ -126,7 +131,7 @@
 /* ---------- Interactive states ---------- */
 
 .primary-button, .secondary-button, .danger-button, .header-primary, .header-scientata-link, .icon-button, .text-button,
-.card-actions button, .builder-toolbar button, .builder-toolbar a, .builder-tabs button, .export-grid button,
+.card-actions button, .builder-toolbar button, .builder-toolbar a, .builder-tabs button, .about-tabs button, .export-grid button,
 .mobile-menu > summary, .settings-menu > summary, .checklist-item .info-toggle, .reasons-editor > div button,
 .coffee-button, .assistant-fab, .desktop-nav a, .global-footer a, .brand-mark, .source-link, .extension-directory a, .prose-page a {
   transition:
@@ -169,7 +174,7 @@ input, select, textarea { transition: border-color var(--motion-base) var(--ease
   .card-actions button:hover svg { transform: scale(1.12); }
   .text-button:hover { color: var(--amber); }
   .builder-toolbar button:hover, .builder-toolbar a:hover { background-color: color-mix(in srgb, var(--amber-bright) 9%, transparent); }
-  .builder-tabs button:hover { color: var(--ink); background-color: color-mix(in srgb, var(--amber-bright) 8%, transparent); }
+  .builder-tabs button:hover, .about-tabs button:hover { color: var(--ink); background-color: color-mix(in srgb, var(--amber-bright) 8%, transparent); }
   .brand:hover .brand-mark { border-color: var(--amber); box-shadow: 0 0 18px -4px var(--amber-bright); }
   .global-footer a:hover { color: var(--amber); }
   .source-link:hover, .extension-directory a:hover, .prose-page a:hover { color: var(--amber); }

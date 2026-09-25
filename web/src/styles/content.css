@@ -70,6 +70,11 @@
 .empty-state p { max-width: 560px; color: var(--muted); }
 .projects-page > .import-wizard { margin-top: 3rem; }
 
+.about-tabs { display: flex; gap: .2rem; margin-top: 2rem; overflow-x: auto; border-bottom: 1px solid var(--line); }
+.about-tabs button { position: relative; flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 44px; padding: 0 1rem; border: 0; background: transparent; color: var(--muted); font: 700 .65rem var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
+.about-tabs button:hover, .about-tabs button[aria-selected='true'] { color: var(--ink); }
+.about-tab-indicator { position: absolute; right: 0; bottom: 0; left: 0; height: 2px; background: var(--amber); }
+.info-page .page-hero { padding-top: 3.5rem; }
 .prose-page { max-width: 860px; margin: 3rem auto 0; font: 1.02rem/1.85 var(--font-display); }
 .prose-page h2 { margin: 2.6rem 0 .7rem; font: 500 2rem/1.2 var(--font-display); }
 .prose-page p, .prose-page li { color: var(--muted); }

@@ -26,6 +26,32 @@
   [headers.values]
     Cache-Control = "no-cache"
 
+# Former standalone pages, now tabs of /about.
+[[redirects]]
+  from = "/methodology"
+  to = "/about?tab=methodology"
+  status = 301
+
+[[redirects]]
+  from = "/privacy"
+  to = "/about?tab=privacy"
+  status = 301
+
+[[redirects]]
+  from = "/accessibility"
+  to = "/about?tab=accessibility"
+  status = 301
+
+[[redirects]]
+  from = "/sources"
+  to = "/about?tab=sources"
+  status = 301
+
+[[redirects]]
+  from = "/license"
+  to = "/about?tab=license"
+  status = 301
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
