@@ -38,11 +38,11 @@ test('troca idioma, tema, contraste e navega por teclado', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('prisma-locale', 'pt-BR'));
   await page.goto('/');
   await expect(page.getByLabel('Idioma')).toBeEnabled();
+  await page.getByLabel('Configurações').click();
   await page.getByLabel('Idioma').selectOption('en');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await page.getByLabel('Theme').selectOption('dark');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await page.getByLabel('Accessibility').click();
   await page.getByLabel('High contrast').check();
   await expect(page.locator('html')).toHaveAttribute('data-contrast', 'high');
   await page.keyboard.press('Tab');
@@ -116,6 +116,7 @@ test('matriz visual de idiomas, temas e viewports', async ({ page }, testInfo) =
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
     return;
   }
+  await page.getByLabel('Configurações').click();
   for (const locale of ['pt-BR', 'en', 'it', 'fr', 'de', 'zh-CN']) {
     await page.getByLabel(/Idioma|Language|Lingua|Langue|Sprache|语言/).selectOption(locale);
     await page.screenshot({ path: testInfo.outputPath(`landing-${locale}.png`), fullPage: false });
@@ -124,7 +125,6 @@ test('matriz visual de idiomas, temas e viewports', async ({ page }, testInfo) =
   await page.screenshot({ path: testInfo.outputPath('theme-light.png'), fullPage: false });
   await page.getByLabel(/Tema|Theme|Design|主题/).selectOption('dark');
   await page.screenshot({ path: testInfo.outputPath('theme-dark.png'), fullPage: false });
-  await page.getByLabel(/Acessibilidade|Accessibility|Accessibilità|Accessibilité|Barrierefreiheit|无障碍/).click();
   const contrast = page.getByLabel(/Alto contraste|High contrast|Contrasto elevato|Contraste élevé|Hoher Kontrast|高对比度/);
   await contrast.check();
   const motion = page.getByLabel(/Reduzir movimentos|Reduce motion|Riduci movimento|Réduire les animations|Bewegungen reduzieren|减少动态效果/);

@@ -18,7 +18,7 @@ describe('componentes essenciais', () => {
     await waitFor(() => expect(document.documentElement.lang).toBe('en'));
     fireEvent.change(screen.getByLabelText('Theme'), { target: { value: 'dark' } });
     await waitFor(() => expect(document.documentElement.dataset.theme).toBe('dark'));
-    fireEvent.click(screen.getByLabelText('Accessibility'));
+    fireEvent.click(screen.getByLabelText('Settings'));
     fireEvent.click(screen.getByLabelText('High contrast'));
     expect(document.documentElement.dataset.contrast).toBe('high');
     expect(localStorage.getItem('prisma-locale')).toBe('en');

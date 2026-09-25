@@ -127,7 +127,7 @@
 
 .primary-button, .secondary-button, .danger-button, .header-primary, .header-scientata-link, .icon-button, .text-button,
 .card-actions button, .builder-toolbar button, .builder-toolbar a, .builder-tabs button, .export-grid button,
-.a11y-menu > summary, .mobile-menu > summary, .compact-select, .checklist-item .info-toggle, .reasons-editor > div button,
+.mobile-menu > summary, .settings-menu > summary, .checklist-item .info-toggle, .reasons-editor > div button,
 .coffee-button, .assistant-fab, .desktop-nav a, .global-footer a, .brand-mark, .source-link, .extension-directory a, .prose-page a {
   transition:
     transform var(--motion-base) var(--ease-out), background-color var(--motion-base) var(--ease-out),
@@ -163,11 +163,10 @@ input, select, textarea { transition: border-color var(--motion-base) var(--ease
   .header-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--ink) 80%, transparent); }
   .secondary-button:hover { transform: translateY(-2px); border-color: var(--amber); box-shadow: var(--glow-shadow); }
   .danger-button:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -12px color-mix(in srgb, var(--red) 80%, transparent); }
-  .icon-button:hover, .card-actions button:hover, .a11y-menu > summary:hover, .mobile-menu > summary:hover, .checklist-item .info-toggle:hover {
+  .icon-button:hover, .card-actions button:hover, .mobile-menu > summary:hover, .settings-menu > summary:hover, .checklist-item .info-toggle:hover {
     border-color: var(--amber); color: var(--ink); background-color: color-mix(in srgb, var(--amber-bright) 10%, var(--surface));
   }
   .card-actions button:hover svg { transform: scale(1.12); }
-  .compact-select:hover { border-color: var(--line-strong); }
   .text-button:hover { color: var(--amber); }
   .builder-toolbar button:hover, .builder-toolbar a:hover { background-color: color-mix(in srgb, var(--amber-bright) 9%, transparent); }
   .builder-tabs button:hover { color: var(--ink); background-color: color-mix(in srgb, var(--amber-bright) 8%, transparent); }
@@ -194,28 +193,30 @@ input:focus, select:focus, textarea:focus { border-color: var(--amber); box-shad
 
 /* Press feedback. */
 :is(.primary-button, .secondary-button, .danger-button, .header-primary, .export-grid button):active { transform: translateY(0) scale(.98); transition-duration: 60ms; }
-:is(.icon-button, .card-actions button, .builder-toolbar button, .a11y-menu > summary, .mobile-menu > summary, .assistant-fab, .coffee-button):active { transform: scale(.94); transition-duration: 60ms; }
+:is(.icon-button, .card-actions button, .builder-toolbar button, .mobile-menu > summary, .settings-menu > summary, .assistant-fab, .coffee-button):active { transform: scale(.94); transition-duration: 60ms; }
 
 /* ---------- Dropdowns and disclosures ---------- */
 
-.a11y-menu[open] > .popover-panel, .mobile-menu[open] > nav { transform-origin: top right; animation: pop-in var(--motion-base) var(--ease-spring); }
-.a11y-menu::details-content, .mobile-menu::details-content {
+.settings-menu[open] > .settings-panel, .mobile-menu[open] > nav { transform-origin: top right; animation: pop-in var(--motion-base) var(--ease-spring); }
+.settings-menu > summary svg { transition: transform var(--motion-slow) var(--ease-spring); }
+.settings-menu[open] > summary svg { transform: rotate(60deg); }
+.settings-menu::details-content, .mobile-menu::details-content {
   opacity: 0;
   transition: opacity var(--motion-exit) var(--ease-out), content-visibility var(--motion-exit) allow-discrete;
 }
-.a11y-menu[open]::details-content, .mobile-menu[open]::details-content { opacity: 1; }
+.settings-menu[open]::details-content, .mobile-menu[open]::details-content { opacity: 1; }
 .mobile-menu nav a { transition: background-color var(--motion-base) var(--ease-out), color var(--motion-base) var(--ease-out), padding var(--motion-base) var(--ease-out); }
 .mobile-menu nav a:hover { padding-left: 1.3rem; background-color: color-mix(in srgb, var(--amber-bright) 9%, transparent); color: var(--amber); }
 
 /* Accordions: height animates where the browser supports ::details-content + interpolate-size;
  * elsewhere the revealed content still fades in. */
-details:not(.a11y-menu, .mobile-menu)::details-content {
+details:not(.mobile-menu, .settings-menu)::details-content {
   block-size: 0;
   overflow-y: clip;
   transition: block-size var(--motion-slow) var(--ease-out), content-visibility var(--motion-slow) allow-discrete;
 }
-details:not(.a11y-menu, .mobile-menu)[open]::details-content { block-size: auto; }
-details:not(.a11y-menu, .mobile-menu)[open] > :not(summary) { animation: fade-in var(--motion-slow) var(--ease-out); }
+details:not(.mobile-menu, .settings-menu)[open]::details-content { block-size: auto; }
+details:not(.mobile-menu, .settings-menu)[open] > :not(summary) { animation: fade-in var(--motion-slow) var(--ease-out); }
 
 .checklist-info, .mapping-preview, .override-box { animation: rise-in var(--motion-base) var(--ease-out); }
 .assistant-message { animation: rise-in var(--motion-base) var(--ease-out); }
