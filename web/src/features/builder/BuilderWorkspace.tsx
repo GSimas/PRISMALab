@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Compass, Download, FileCheck2, Focus, HelpCircle, Maximize2, Redo2, Sparkles, Trash2, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
+import { flushSync } from 'react-dom';
+import { Compass, Download, FileCheck2, Focus, HelpCircle, Maximize2, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Redo2, Sparkles, Trash2, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
 import { useApp } from '../../app/AppProviders';
 import { useProjectStore } from '../../app/store';
 import { usePresence } from '../../app/usePresence';
@@ -34,6 +35,15 @@ const fieldSections: { titleKey: TranslationKey; slug: string; fields: CountKey[
 
 const optionalFields: CountKey[] = ['automationExcluded', 'removedOther'];
 
+type Side = 'data' | 'context';
+type Panels = Record<Side, boolean>;
+const PANELS_KEY = 'prisma-builder-panels';
+
+// Multiplicative steps feel even at every scale: 82% → 103% → 128% → … → 400%.
+const MIN_ZOOM = 0.4;
+const MAX_ZOOM = 4;
+const ZOOM_STEP = 1.25;
+
 export function BuilderWorkspace() {
   const { ready, locale, t } = useApp();
   const { project, past, future, setProject, patchProject, updateCount, updateProject, undo, redo } = useProjectStore();
@@ -43,6 +53,8 @@ export function BuilderWorkspace() {
   const [zoom, setZoom] = useState(0.82);
   const [saveState, setSaveState] = useState<'saving' | 'saved'>('saved');
   const [confirmClear, setConfirmClear] = useState(false);
+  // Which side panels are collapsed; a per-browser preference.
+  const [collapsed, setCollapsed] = useState<Panels>({ data: false, context: false });
   const clearModal = usePresence(confirmClear);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const flashTimeoutRef = useRef<number | undefined>(undefined);
@@ -53,9 +65,21 @@ export function BuilderWorkspace() {
   const calculated = useMemo(() => calculateProject(project), [project]);
   const issues = useMemo(() => validateProject(project, locale), [project, locale]);
 
+  const setPanels = (next: Panels) => {
+    setCollapsed(next);
+    localStorage.setItem(PANELS_KEY, JSON.stringify(next));
+  };
+  const togglePanel = (side: Side) => setPanels({ ...collapsed, [side]: !collapsed[side] });
+  // The tour walks through both panels, so it always shows them.
+  const dataCollapsed = collapsed.data && !touring;
+  const contextCollapsed = collapsed.context && !touring;
+
   const focusById = (id: string) => {
     const el = document.getElementById(id);
     if (!el) return;
+    // Expand a collapsed panel synchronously so the target can be scrolled to.
+    const side = el.closest<HTMLElement>('[data-panel]')?.dataset.panel as Side | undefined;
+    if (side && collapsed[side]) flushSync(() => setPanels({ ...collapsed, [side]: false }));
     const details = el.closest('details');
     if (details && !(details as HTMLDetailsElement).open) (details as HTMLDetailsElement).open = true;
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -91,6 +115,16 @@ export function BuilderWorkspace() {
     const id = new URLSearchParams(window.location.search).get('project') ?? localStorage.getItem('prisma-last-project');
     if (id) getProject(id).then((saved) => saved && setProject(saved));
   }, [setProject]);
+
+  useEffect(() => {
+    const load = window.setTimeout(() => {
+      try {
+        const saved = JSON.parse(localStorage.getItem(PANELS_KEY) ?? 'null') as Partial<Panels> | null;
+        if (saved) setCollapsed({ data: saved.data === true, context: saved.context === true });
+      } catch { /* ignore a malformed preference */ }
+    }, 0);
+    return () => window.clearTimeout(load);
+  }, []);
 
   // `?tour=1` (the landing page link) starts the guided tour once.
   useEffect(() => {
@@ -327,9 +361,9 @@ export function BuilderWorkspace() {
         <button type="button" onClick={undo} disabled={!past.length} title={t('undo')}><Undo2 /><span>{t('undo')}</span></button>
         <button type="button" onClick={redo} disabled={!future.length} title={t('redo')}><Redo2 /><span>{t('redo')}</span></button>
         <span className="toolbar-divider" />
-        <button type="button" onClick={() => setZoom((value) => Math.max(0.45, value - 0.1))} title={t('zoomOut')}><ZoomOut /><span>−</span></button>
+        <button type="button" onClick={() => setZoom((value) => Math.max(MIN_ZOOM, value / ZOOM_STEP))} disabled={zoom <= MIN_ZOOM} title={t('zoomOut')}><ZoomOut /><span>−</span></button>
         <output aria-label={t('zoomLevel')}>{Math.round(zoom * 100)}%</output>
-        <button type="button" onClick={() => setZoom((value) => Math.min(1.5, value + 0.1))} title={t('zoomIn')}><ZoomIn /><span>+</span></button>
+        <button type="button" onClick={() => setZoom((value) => Math.min(MAX_ZOOM, value * ZOOM_STEP))} disabled={zoom >= MAX_ZOOM} title={t('zoomIn')}><ZoomIn /><span>+</span></button>
         <button type="button" onClick={() => setZoom(0.82)} title={t('fit')}><Focus /><span>{t('fit')}</span></button>
         <button type="button" onClick={() => workspaceRef.current?.requestFullscreen()} title={t('fullscreen')}><Maximize2 /><span>{t('fullscreen')}</span></button>
         <button type="button" onClick={() => setTab('export')} title={t('export')}><Download /><span>{t('export')}</span></button>
@@ -352,8 +386,12 @@ export function BuilderWorkspace() {
       {tab === 'import' && <div className="single-module"><ImportWizard onImport={(next) => { setProject(next); setTab('data'); }} /></div>}
 
       {tab === 'data' && (
-        <div className="builder-workspace" ref={workspaceRef}>
-          <aside className="data-panel" aria-label="Preenchimento do diagrama">
+        <div className={`builder-workspace${dataCollapsed ? ' data-collapsed' : ''}${contextCollapsed ? ' context-collapsed' : ''}`} ref={workspaceRef}>
+          <aside className="data-panel" data-panel="data" data-collapsed={dataCollapsed || undefined} aria-label="Preenchimento do diagrama">
+            <button type="button" className="panel-toggle" aria-expanded={!dataCollapsed} aria-label={`${dataCollapsed ? t('expandPanel') : t('collapsePanel')}: ${t('data')}`} title={dataCollapsed ? t('expandPanel') : t('collapsePanel')} onClick={() => togglePanel('data')}>
+              {dataCollapsed ? <PanelLeftOpen size={16} aria-hidden="true" /> : <PanelLeftClose size={16} aria-hidden="true" />}
+              <span>{t('data')}</span>
+            </button>
             <section className="project-setup">
               <h2>{t('projectSetup')}</h2>
               <label id="project-title-field">{t('title')}<input value={project.title} onChange={(event) => patchProject({ title: event.target.value })} /></label>
@@ -504,14 +542,19 @@ export function BuilderWorkspace() {
                 <label>{t('structureMode')}<select aria-label={t('structureMode')} value={project.presentation.mode} onChange={(event) => patchProject({ presentation: { ...project.presentation, mode: event.target.value as 'prisma' | 'presentation' } })}><option value="prisma">{t('prismaMode')}</option><option value="presentation">{t('presentationMode')}</option></select></label>
               </div>
             </div>
-            <PrismaDiagram project={project} locale={locale} selected={selected} onSelect={focusField} onSelectStage={focusStage} zoom={zoom} />
+            <PrismaDiagram project={project} locale={locale} selected={selected} onSelect={focusField} onSelectStage={focusStage} zoom={zoom} onZoom={(update) => setZoom((value) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, update(value))))} />
             <details className="diagram-alternative">
               <summary>{t('tabularAlternative')}</summary>
               <table><thead><tr><th>{t('stage')}</th><th>{t('value')}</th><th>{t('origin')}</th></tr></thead><tbody>{countKeys.filter(applicable).map((field) => <tr key={field}><th>{labels[field]}</th><td>{calculated.values[field] ?? '—'}</td><td>{calculated.origins[field]}</td></tr>)}</tbody></table>
             </details>
           </section>
 
-          <aside className="context-panel" aria-label="Detalhes e validação">
+          <aside className="context-panel" data-panel="context" data-collapsed={contextCollapsed || undefined} aria-label="Detalhes e validação">
+            <button type="button" className="panel-toggle" aria-expanded={!contextCollapsed} aria-label={`${contextCollapsed ? t('expandPanel') : t('collapsePanel')}: ${t('validation')}`} title={contextCollapsed ? t('expandPanel') : t('collapsePanel')} onClick={() => togglePanel('context')}>
+              {contextCollapsed ? <PanelRightOpen size={16} aria-hidden="true" /> : <PanelRightClose size={16} aria-hidden="true" />}
+              <span>{t('validation')}</span>
+              <b className="issue-count">{issues.filter((item) => item.status !== 'valid').length}</b>
+            </button>
             <section className="selected-node">
               <p className="kicker">{t('selectedNode')}</p><h2>{labels[selected]}</h2>
               <p>{definitions[selected] ?? t('defaultDefinition')}</p>

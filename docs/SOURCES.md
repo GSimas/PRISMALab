@@ -17,3 +17,7 @@ Consultadas e verificadas em 26 de agosto de 2026.
 Os quatro modelos seguem as combinações oficiais de revisão nova/atualizada e bases/registros/todas as fontes. O checklist reproduz a estrutura de 27 itens para acompanhamento, com atribuição CC BY 4.0. A interface deixa explícito que PRISMA é uma diretriz de relato e que a ferramenta não certifica conformidade integral.
 
 Há traduções oficiais apenas para alguns materiais e idiomas. Sempre que uma cadeia da aplicação não estiver coberta por uma tradução oficial identificável, ela deve ser tratada como tradução própria, sujeita a revisão humana técnica.
+
+## Tipografia da interface
+
+A interface segue a linguagem visual da Scientata e usa fontes servidas localmente em `web/public/fonts` (subconjunto latino, obtido do Google Fonts), todas sob SIL Open Font License 1.1: Manrope (Mikhail Sharanda), Instrument Serif (Instrument) e DM Mono (Colophon Foundry). Glifos fora do subconjunto, como o chinês simplificado, recaem nas fontes do sistema (Noto Sans SC/Noto Serif SC).

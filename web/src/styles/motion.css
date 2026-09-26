@@ -16,41 +16,54 @@
 :root {
   --motion-fast: 140ms;
   --motion-base: 220ms;
-  --motion-slow: 420ms;
-  --motion-page: 560ms;
+  --motion-slow: 450ms;
+  --motion-shine: 700ms;
+  --motion-page: 800ms;
   --motion-exit: 180ms;
   --ease-out: cubic-bezier(.16, 1, .3, 1);
   --ease-in: cubic-bezier(.5, 0, .75, 0);
-  --ease-spring: cubic-bezier(.34, 1.36, .64, 1);
-  --glow-color: rgb(255 189 74 / 24%);
-  --glow-shadow: 0 18px 40px -24px rgb(141 79 6 / 55%);
+  /* Hover light (cursor spotlight), card lift shadow and signal halo. */
+  --glow-color: rgb(38 113 95 / 13%);
+  --glow-shadow: 0 16px 36px rgb(7 17 15 / 9%), 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent);
+  --signal-halo: 0 0 34px rgb(184 255 74 / 45%);
+  --text-glow: none;
+  --text-glow-peak: none;
   interpolate-size: allow-keywords;
 }
 :root[data-theme='dark'] {
-  --glow-color: rgb(255 189 74 / 13%);
-  --glow-shadow: 0 18px 44px -22px rgb(255 189 74 / 38%);
+  --glow-color: rgb(184 255 74 / 9%);
+  --glow-shadow: 0 0 32px rgb(184 255 74 / 12%), 0 0 0 1px rgb(184 255 74 / 22%);
+  --signal-halo: 0 0 34px rgb(184 255 74 / 28%);
+  --text-glow: 0 0 22px rgb(184 255 74 / 18%), 0 0 70px rgb(184 255 74 / 12%);
+  --text-glow-peak: 0 0 28px rgb(184 255 74 / 50%), 0 0 100px rgb(83 215 208 / 24%);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    --glow-color: rgb(255 189 74 / 13%);
-    --glow-shadow: 0 18px 44px -22px rgb(255 189 74 / 38%);
+    --glow-color: rgb(184 255 74 / 9%);
+    --glow-shadow: 0 0 32px rgb(184 255 74 / 12%), 0 0 0 1px rgb(184 255 74 / 22%);
+    --signal-halo: 0 0 34px rgb(184 255 74 / 28%);
+    --text-glow: 0 0 22px rgb(184 255 74 / 18%), 0 0 70px rgb(184 255 74 / 12%);
+    --text-glow-peak: 0 0 28px rgb(184 255 74 / 50%), 0 0 100px rgb(83 215 208 / 24%);
   }
 }
 
-@keyframes rise-in { from { opacity: 0; translate: 0 14px; } }
+@keyframes rise-in { from { opacity: 0; translate: 0 28px; } }
 @keyframes fade-in { from { opacity: 0; } }
 @keyframes fade-out { to { opacity: 0; } }
 @keyframes slide-in-right { from { opacity: 0; translate: 28px 0; } }
-@keyframes pop-in { from { opacity: 0; translate: 0 -6px; scale: .97; } }
-@keyframes modal-in { from { opacity: 0; translate: 0 10px; scale: .96; } }
-@keyframes modal-out { to { opacity: 0; translate: 0 6px; scale: .98; } }
-@keyframes panel-in { from { opacity: 0; translate: 0 12px; scale: .94; } }
-@keyframes panel-out { to { opacity: 0; translate: 0 8px; scale: .96; } }
-@keyframes toast-in { from { opacity: 0; translate: 0 16px; } }
+/* Surfaces unroll along their anchor edge (clip-path) instead of bouncing in. */
+@keyframes pop-in { from { opacity: 0; translate: 0 -8px; clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes modal-in { from { opacity: 0; translate: 0 24px; scale: .985; } }
+@keyframes modal-out { to { opacity: 0; translate: 0 12px; } }
+@keyframes panel-in { from { opacity: 0; translate: 0 20px; clip-path: inset(100% 0 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes panel-out { to { opacity: 0; translate: 0 12px; } }
+@keyframes toast-in { from { opacity: 0; translate: 0 24px; } }
 @keyframes toast-out { to { opacity: 0; translate: 0 10px; } }
 @keyframes draw-down { from { scale: 1 0; } }
-@keyframes breathe { 0%, 100% { box-shadow: 0 0 10px var(--amber); } 50% { box-shadow: 0 0 22px var(--amber-bright); } }
-@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 55%, transparent); } 70%, 100% { box-shadow: 0 0 0 7px transparent; } }
+@keyframes signal-breathe { 0%, 100% { text-shadow: var(--text-glow); } 50% { text-shadow: var(--text-glow-peak); } }
+@keyframes ping { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 50%, transparent); } 50% { box-shadow: 0 0 0 7px transparent; } }
+@keyframes line-scan { from { scale: 0 1; } }
+@keyframes slow-spin { to { rotate: 360deg; } }
 
 /* ---------- Page transitions ---------- */
 
@@ -87,8 +100,9 @@
 .flow-step:nth-child(3) { animation-delay: 520ms; }
 .flow-step:nth-child(4) { animation-delay: 600ms; }
 .flow-line { transform-origin: top; animation: draw-down var(--motion-slow) var(--ease-out) backwards; animation-delay: inherit; }
-.eyebrow span { animation: breathe 3.6s ease-in-out infinite; }
-.status-dot { animation: pulse-ring 2.8s ease-out infinite; }
+.eyebrow span { transform-origin: left; animation: line-scan var(--motion-page) var(--ease-out) 200ms backwards; }
+.hero h1 em { text-shadow: var(--text-glow); animation: signal-breathe 4s ease-in-out infinite; }
+.status-dot { animation: ping 2.8s ease-in-out infinite; }
 
 .project-grid > * { animation: rise-in var(--motion-slow) var(--ease-out) backwards; }
 .project-grid > :nth-child(2) { animation-delay: 50ms; }
@@ -124,7 +138,17 @@
   opacity: 0;
   transition: opacity var(--motion-slow) var(--ease-out);
 }
-:is(.primary-button, .danger-button, .header-primary) { --glow-size: 140px; --glow-color: rgb(255 255 255 / 38%); }
+:is(.primary-button, .danger-button, .header-primary) { --glow-size: 140px; --glow-color: rgb(255 255 255 / 45%); overflow: hidden; }
+:is(.primary-button, .danger-button, .header-primary)::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -80% -30%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 35%, rgb(255 255 255 / 70%) 50%, transparent 65%);
+  transform: translateX(-65%) rotate(16deg);
+  transition: transform var(--motion-shine) var(--ease-out);
+}
 :is(.secondary-button, .export-grid button, .validation-item) { --glow-size: 180px; }
 :root[data-contrast='high'] :is(.primary-button, .secondary-button, .danger-button, .header-primary, .feature-grid article, .topic-card, .project-card, .extension-directory article, .definition-pair article, .flow-card, .export-grid button, .checklist-item, .validation-item, .independence-note, .recommendation-panel, .guideline-form fieldset, .empty-state, .database-sources-block)::after { display: none; }
 
@@ -135,7 +159,7 @@
 .mobile-menu > summary, .settings-menu > summary, .checklist-item .info-toggle, .reasons-editor > div button,
 .coffee-button, .assistant-fab, .desktop-nav a, .global-footer a, .brand-mark, .source-link, .extension-directory a, .prose-page a {
   transition:
-    transform var(--motion-base) var(--ease-out), background-color var(--motion-base) var(--ease-out),
+    transform var(--motion-base) var(--ease-out), rotate var(--motion-slow) var(--ease-out), background-color var(--motion-base) var(--ease-out),
     border-color var(--motion-base) var(--ease-out), color var(--motion-base) var(--ease-out),
     box-shadow var(--motion-base) var(--ease-out), opacity var(--motion-base) var(--ease-out);
 }
@@ -148,7 +172,6 @@
 }
 .feature-grid article > svg, .topic-card header span, .feature-grid article > span, .card-actions svg { transition: transform var(--motion-slow) var(--ease-out), color var(--motion-base) var(--ease-out); }
 input, select, textarea { transition: border-color var(--motion-base) var(--ease-out), box-shadow var(--motion-base) var(--ease-out), background-color var(--motion-base) var(--ease-out); }
-.prisma-svg { transition: width var(--motion-base) var(--ease-out), height var(--motion-base) var(--ease-out); }
 .diagram-node rect { transition: stroke var(--motion-base) var(--ease-out), fill var(--motion-base) var(--ease-out), stroke-width var(--motion-base) var(--ease-out); }
 .diagram-node { transition: filter var(--motion-base) var(--ease-out); }
 .classic-stage-band { transition: fill var(--motion-base) var(--ease-out); }
@@ -158,42 +181,46 @@ input, select, textarea { transition: border-color var(--motion-base) var(--ease
 
 /* Header nav: underline grows from the centre instead of snapping in. */
 .desktop-nav a { position: relative; border-bottom: 0; }
-.desktop-nav a::after { content: ''; position: absolute; right: 0; bottom: 0; left: 0; height: 1px; background: var(--amber); transform: scaleX(0); transition: transform var(--motion-base) var(--ease-out); }
+.desktop-nav a::after { content: ''; position: absolute; right: 0; bottom: 0; left: 0; height: 1px; background: var(--accent); transform: scaleX(0); transition: transform var(--motion-base) var(--ease-out); }
 .desktop-nav a:hover::after, .desktop-nav a:focus-visible::after { transform: scaleX(1); }
 
 @media (hover: hover) and (pointer: fine) {
   :is(.primary-button, .secondary-button, .danger-button, .header-primary, .feature-grid article, .topic-card, .project-card, .extension-directory article, .definition-pair article, .flow-card, .export-grid button, .checklist-item, .validation-item, .independence-note, .recommendation-panel, .guideline-form fieldset, .empty-state, .database-sources-block):hover::after { opacity: 1; }
 
-  .primary-button:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -12px rgb(255 189 74 / 85%); }
-  .header-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--ink) 80%, transparent); }
-  .secondary-button:hover { transform: translateY(-2px); border-color: var(--amber); box-shadow: var(--glow-shadow); }
-  .danger-button:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -12px color-mix(in srgb, var(--red) 80%, transparent); }
-  .icon-button:hover, .card-actions button:hover, .mobile-menu > summary:hover, .settings-menu > summary:hover, .checklist-item .info-toggle:hover {
-    border-color: var(--amber); color: var(--ink); background-color: color-mix(in srgb, var(--amber-bright) 10%, var(--surface));
+  :is(.primary-button, .danger-button, .header-primary):hover::before { transform: translateX(65%) rotate(16deg); }
+  .primary-button:hover, .header-primary:hover { transform: translateY(-2px); box-shadow: var(--signal-halo); }
+  .secondary-button:hover { transform: translateY(-2px); border-color: var(--accent); color: var(--accent); box-shadow: var(--glow-shadow); }
+  .danger-button:hover { transform: translateY(-2px); box-shadow: 0 0 30px color-mix(in srgb, var(--red) 45%, transparent); }
+  .header-scientata-link:hover { border-color: var(--accent); color: var(--accent); }
+  /* Round controls fill with signal, like Scientata's carousel buttons. */
+  .icon-button:hover, .mobile-menu > summary:hover, .settings-menu > summary:hover, .checklist-item .info-toggle:hover {
+    border-color: var(--signal); color: #07110f; background-color: var(--signal); box-shadow: 0 0 24px rgb(184 255 74 / 22%);
   }
+  .card-actions button:hover { border-color: var(--accent); color: var(--accent); background-color: color-mix(in srgb, var(--accent) 8%, transparent); }
+  .coffee-button:hover, .assistant-fab:hover { transform: translateY(-3px); box-shadow: 0 0 34px rgb(184 255 74 / 40%); }
   .card-actions button:hover svg { transform: scale(1.12); }
-  .text-button:hover { color: var(--amber); }
-  .builder-toolbar button:hover, .builder-toolbar a:hover { background-color: color-mix(in srgb, var(--amber-bright) 9%, transparent); }
-  .builder-tabs button:hover, .about-tabs button:hover { color: var(--ink); background-color: color-mix(in srgb, var(--amber-bright) 8%, transparent); }
-  .brand:hover .brand-mark { border-color: var(--amber); box-shadow: 0 0 18px -4px var(--amber-bright); }
-  .global-footer a:hover { color: var(--amber); }
-  .source-link:hover, .extension-directory a:hover, .prose-page a:hover { color: var(--amber); }
+  .text-button:hover { color: var(--accent); }
+  .builder-toolbar button:hover, .builder-toolbar a:hover { color: var(--accent); background-color: color-mix(in srgb, var(--accent) 8%, transparent); }
+  .builder-tabs button:hover, .about-tabs button:hover { color: var(--accent); }
+  .brand:hover .brand-mark { rotate: 0deg; border-color: var(--accent); box-shadow: 0 0 22px -2px color-mix(in srgb, var(--accent) 55%, transparent); }
+  .global-footer a:hover { color: var(--accent); }
+  .source-link:hover, .extension-directory a:hover, .prose-page a:hover { color: var(--accent); }
 
-  .feature-grid article:hover, .topic-card:hover, .extension-directory article:hover, .definition-pair article:hover { background-color: color-mix(in srgb, var(--surface) 92%, var(--amber-bright)); }
+  .feature-grid article:hover, .topic-card:hover, .extension-directory article:hover, .definition-pair article:hover { background-color: color-mix(in srgb, var(--surface) 94%, var(--accent)); }
   .feature-grid article:hover > svg { transform: translateY(-3px) scale(1.06); }
-  .feature-grid article:hover > span, .topic-card:hover header span { color: var(--amber); transform: translateX(-3px); }
-  .project-card:hover, .export-grid button:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--amber) 60%, var(--line)); box-shadow: var(--glow-shadow); }
-  .flow-card:hover { transform: translateX(4px); border-color: var(--amber); }
+  .feature-grid article:hover > span, .topic-card:hover header span { color: var(--accent); transform: translateX(-3px); }
+  .project-card:hover, .export-grid button:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--accent) 65%, var(--line)); box-shadow: var(--glow-shadow); }
+  .flow-card:hover { transform: translateX(4px); border-color: var(--accent); }
   .checklist-item:hover, .guideline-form fieldset:hover, .database-sources-block:hover, .empty-state:hover { border-color: var(--line-strong); }
   .validation-item:hover { transform: translateX(3px); }
   .independence-note:hover, .recommendation-panel:hover { border-color: var(--line-strong); box-shadow: var(--glow-shadow); }
-  .diagram-preview:hover { box-shadow: 30px 30px 0 color-mix(in srgb, var(--blue) 18%, transparent); }
-  .form-section > summary:hover, .checklist-section > summary:hover, .prose-page summary:hover { color: var(--amber); }
-  .diagram-node:hover { filter: drop-shadow(0 4px 10px rgb(255 174 45 / 35%)); }
+  .diagram-preview:hover { border-color: color-mix(in srgb, var(--accent) 60%, var(--line-strong)); }
+  .form-section > summary:hover, .checklist-section > summary:hover, .prose-page summary:hover { color: var(--accent); }
+  .diagram-node:hover { filter: drop-shadow(0 4px 12px color-mix(in srgb, var(--accent) 35%, transparent)); }
   input:hover:not(:disabled):not(:focus), select:hover:not(:disabled):not(:focus), textarea:hover:not(:disabled):not(:focus) { border-color: var(--line-strong); }
 }
 
-input:focus, select:focus, textarea:focus { border-color: var(--amber); box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber-bright) 22%, transparent); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); background-color: var(--surface); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent); }
 .project-title-input:focus { box-shadow: none; }
 
 /* Press feedback. */
@@ -202,16 +229,22 @@ input:focus, select:focus, textarea:focus { border-color: var(--amber); box-shad
 
 /* ---------- Dropdowns and disclosures ---------- */
 
-.settings-menu[open] > .settings-panel, .mobile-menu[open] > nav { transform-origin: top right; animation: pop-in var(--motion-base) var(--ease-spring); }
-.settings-menu > summary svg { transition: transform var(--motion-slow) var(--ease-spring); }
+.settings-menu[open] > .settings-panel, .mobile-menu[open] > nav { transform-origin: top right; animation: pop-in var(--motion-slow) var(--ease-out); }
+/* Items follow the panel in a short cascade. */
+.settings-menu[open] > .settings-panel > *, .mobile-menu[open] > nav > a { animation: rise-in var(--motion-slow) var(--ease-out) backwards; }
+:is(.settings-panel > *, .mobile-menu nav > a):nth-child(2) { animation-delay: 40ms; }
+:is(.settings-panel > *, .mobile-menu nav > a):nth-child(3) { animation-delay: 80ms; }
+:is(.settings-panel > *, .mobile-menu nav > a):nth-child(n + 4) { animation-delay: 120ms; }
+.settings-menu > summary svg { transition: transform var(--motion-slow) var(--ease-out); }
 .settings-menu[open] > summary svg { transform: rotate(60deg); }
+.settings-menu[open] > summary:not(:hover), .mobile-menu[open] > summary:not(:hover) { border-color: var(--accent); color: var(--accent); }
 .settings-menu::details-content, .mobile-menu::details-content {
   opacity: 0;
   transition: opacity var(--motion-exit) var(--ease-out), content-visibility var(--motion-exit) allow-discrete;
 }
 .settings-menu[open]::details-content, .mobile-menu[open]::details-content { opacity: 1; }
 .mobile-menu nav a { transition: background-color var(--motion-base) var(--ease-out), color var(--motion-base) var(--ease-out), padding var(--motion-base) var(--ease-out); }
-.mobile-menu nav a:hover { padding-left: 1.3rem; background-color: color-mix(in srgb, var(--amber-bright) 9%, transparent); color: var(--amber); }
+.mobile-menu nav a:hover { padding-left: 1.3rem; background-color: color-mix(in srgb, var(--accent) 7%, transparent); color: var(--accent); }
 
 /* Accordions: height animates where the browser supports ::details-content + interpolate-size;
  * elsewhere the revealed content still fades in. */
@@ -226,20 +259,34 @@ details:not(.mobile-menu, .settings-menu)[open] > :not(summary) { animation: fad
 .checklist-info, .mapping-preview, .override-box { animation: rise-in var(--motion-base) var(--ease-out); }
 .assistant-message { animation: rise-in var(--motion-base) var(--ease-out); }
 
+/* Select lists unroll from the control, like the header dropdowns. */
+@supports (appearance: base-select) {
+  select::picker-icon { transition: rotate var(--motion-slow) var(--ease-out), margin var(--motion-slow) var(--ease-out), color var(--motion-base) var(--ease-out); }
+  ::picker(select) {
+    opacity: 0; translate: 0 -6px; clip-path: inset(0 0 100% 0);
+    transition: opacity var(--motion-base) var(--ease-out), translate var(--motion-slow) var(--ease-out), clip-path var(--motion-slow) var(--ease-out),
+      display var(--motion-slow) allow-discrete, overlay var(--motion-slow) allow-discrete;
+  }
+  select:open::picker(select) { opacity: 1; translate: 0 0; clip-path: inset(0 0 0 0); }
+  @starting-style { select:open::picker(select) { opacity: 0; translate: 0 -6px; clip-path: inset(0 0 100% 0); } }
+  select option { transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out); }
+}
+
 /* ---------- Modals, panels and toasts ---------- */
 
-.modal-backdrop { animation: fade-in var(--motion-base) var(--ease-out); backdrop-filter: blur(3px); }
-.modal-backdrop > .modal { animation: modal-in var(--motion-slow) var(--ease-spring); }
+.modal-backdrop { animation: fade-in var(--motion-slow) var(--ease-out); backdrop-filter: blur(8px); }
+.modal::before { transform-origin: left; animation: line-scan var(--motion-page) var(--ease-out) 120ms backwards; }
+.modal-backdrop > .modal { animation: modal-in var(--motion-slow) var(--ease-out); }
 .modal-backdrop[data-state='closing'] { pointer-events: none; animation: fade-out var(--motion-exit) var(--ease-in) forwards; }
 .modal-backdrop[data-state='closing'] > .modal { animation: modal-out var(--motion-exit) var(--ease-in) forwards; }
 
-.assistant-panel { transform-origin: bottom right; animation: panel-in var(--motion-slow) var(--ease-spring); }
+.assistant-panel { transform-origin: bottom right; animation: panel-in var(--motion-slow) var(--ease-out); }
 .assistant-panel[data-state='closing'] { pointer-events: none; animation: panel-out var(--motion-exit) var(--ease-in) forwards; }
-.assistant-fab svg { transition: transform var(--motion-slow) var(--ease-spring); }
+.assistant-fab svg { transition: transform var(--motion-slow) var(--ease-out); }
 .assistant-fab:hover svg { transform: rotate(18deg) scale(1.08); }
 .assistant-fab[aria-expanded='true'] svg { transform: rotate(90deg); }
 
-.undo-toast { animation: toast-in var(--motion-slow) var(--ease-spring); }
+.undo-toast { animation: toast-in var(--motion-slow) var(--ease-out); }
 .undo-toast[data-state='closing'] { pointer-events: none; animation: toast-out var(--motion-exit) var(--ease-in) forwards; }
 
 /* Reduced motion must also cancel pseudo-elements the global `*` rules don't reach. */
@@ -247,6 +294,12 @@ details:not(.mobile-menu, .settings-menu)[open] > :not(summary) { animation: fad
   details::details-content { transition: none !important; }
 }
 :root[data-motion='reduced'] details::details-content { transition: none !important; }
+/* The select picker is a pseudo-element the global `*` rules don't reach. */
+@media (prefers-reduced-motion: reduce) { ::picker(select) { transition: none !important; } }
+:root[data-motion='reduced'] ::picker(select) { transition: none !important; }
+/* Pointer tilt is motion too. */
+@media (prefers-reduced-motion: reduce) { .diagram-preview { transform: none; } }
+:root[data-motion='reduced'] .diagram-preview { transform: none; }
 :root[data-motion='reduced']::view-transition-group(*),
 :root[data-motion='reduced']::view-transition-old(*),
 :root[data-motion='reduced']::view-transition-new(*) { animation: none !important; }

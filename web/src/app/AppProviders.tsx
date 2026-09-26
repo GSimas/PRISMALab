@@ -68,7 +68,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
       const resolved = resolveTheme(theme, media.matches);
       document.documentElement.dataset.theme = resolved;
       document.documentElement.style.colorScheme = resolved;
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#08101f' : '#f5f1e8');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#07110f' : '#eeece4');
     };
     if (animateThemeChange.current) withViewTransition(apply);
     else apply();
