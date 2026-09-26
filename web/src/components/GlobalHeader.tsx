@@ -2,7 +2,6 @@
 
 import { useRef } from 'react';
 import { Menu, Plus, Settings2 } from 'lucide-react';
-import Link from 'next/link';
 import { useApp } from '../app/AppProviders';
 import { localeNames } from '../i18n/translations';
 import { supportedLocales } from '../i18n/locale';
@@ -15,12 +14,14 @@ export function GlobalHeader() {
     <>
       <a className="skip-link" href="#main-content">{t('skipToContent')}</a>
       <header className="global-header">
-        <Link className="brand" href="/" aria-label="PRISMA Lab">
+        {/* A full page load, like the nav links: next/link's client router throws in the static vinext export. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+        <a className="brand" href="/" aria-label="PRISMA Lab">
           <span className="brand-mark" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><rect x="3" y="3" width="18" height="4" rx="1.2" /><rect x="6" y="10" width="12" height="4" rx="1.2" /><rect x="9" y="17" width="6" height="4" rx="1.2" /></svg>
           </span>
           <span><strong>PRISMA Lab</strong><small>{t('scientataApp')}</small></span>
-        </Link>
+        </a>
         <nav className="desktop-nav" aria-label="Navegação principal">
           <a href="/learn">{t('learn')}</a>
           <a href="/projects">{t('projects')}</a>
