@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { AlertTriangle, CheckCircle2, Eye, EyeOff, Loader2, LogIn, MessageSquarePlus, Send, Settings, Sparkles, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Eye, EyeOff, Loader2, LogIn, MessageSquarePlus, Send, Settings, X } from 'lucide-react';
+import { PrimiIcon } from './PrimiIcon';
 import { useApp } from '../app/AppProviders';
 import { useProjectStore } from '../app/store';
 import { usePresence } from '../app/usePresence';
@@ -220,17 +221,20 @@ export function PrismaAssistant() {
   return (
     <>
       <button type="button" className="assistant-fab" onClick={toggleOpen} aria-label={t('assistantOpen')} aria-expanded={open} title="Primi">
-        <Sparkles size={20} aria-hidden="true" />
+        <PrimiIcon size={24} />
       </button>
       {panel.rendered && (
         <div className="assistant-panel" role="dialog" aria-label="Primi — Assistente PRISMA" data-state={panel.state}>
           <header className="assistant-panel-header">
-            <div>
-              <strong>Primi</strong>
-              <span>{t('assistantTagline')}</span>
+            <div className="assistant-identity">
+              <div className="assistant-avatar"><PrimiIcon size={20} /></div>
+              <div>
+                <strong>Primi</strong>
+                <span>{t('assistantTagline')}</span>
+              </div>
             </div>
             <div className="assistant-header-actions">
-              <button type="button" className="icon-button" onClick={() => (view === 'settings' ? setView('chat') : enterSettingsView())} aria-label={t('assistantSettings')} title={t('assistantSettings')}>
+              <button type="button" className="icon-button assistant-settings-toggle" onClick={() => (view === 'settings' ? setView('chat') : enterSettingsView())} aria-label={t('assistantSettings')} aria-pressed={view === 'settings'} title={t('assistantSettings')}>
                 <Settings size={16} aria-hidden="true" />
               </button>
               <button type="button" className="icon-button" onClick={() => setOpen(false)} aria-label={t('assistantClose')} title={t('assistantClose')}>

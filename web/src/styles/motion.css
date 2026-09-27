@@ -282,9 +282,22 @@ details:not(.mobile-menu, .settings-menu)[open] > :not(summary) { animation: fad
 
 .assistant-panel { transform-origin: bottom right; animation: panel-in var(--motion-slow) var(--ease-out); }
 .assistant-panel[data-state='closing'] { pointer-events: none; animation: panel-out var(--motion-exit) var(--ease-in) forwards; }
+/* Primi: a curious tilt on hover, a nod when open, an occasional blink and a twinkling spark. */
 .assistant-fab svg { transition: transform var(--motion-slow) var(--ease-out); }
-.assistant-fab:hover svg { transform: rotate(18deg) scale(1.08); }
-.assistant-fab[aria-expanded='true'] svg { transform: rotate(90deg); }
+.assistant-fab:hover svg { transform: rotate(-10deg) scale(1.08); }
+.assistant-fab[aria-expanded='true'] svg { transform: translateY(1px) scale(.94); }
+/* Primi's chat and settings views slide in from the side they belong to. */
+@keyframes view-in-right { from { opacity: 0; translate: 18px 0; } }
+@keyframes view-in-left { from { opacity: 0; translate: -18px 0; } }
+.assistant-settings { animation: view-in-right var(--motion-slow) var(--ease-out); }
+.assistant-chat { animation: view-in-left var(--motion-slow) var(--ease-out); }
+.assistant-settings-toggle svg { transition: rotate var(--motion-slow) var(--ease-out); }
+.assistant-settings-toggle[aria-pressed='true'] svg { rotate: 90deg; }
+.assistant-settings-toggle[aria-pressed='true']:not(:hover) { border-color: var(--accent); color: var(--accent); }
+@keyframes primi-blink { 0%, 92%, 100% { scale: 1 1; } 95% { scale: 1 .1; } }
+@keyframes primi-twinkle { 0%, 100% { opacity: 1; scale: 1; } 50% { opacity: .45; scale: .7; } }
+.primi-eye { transform-box: fill-box; transform-origin: center; animation: primi-blink 4.5s ease-in-out infinite; }
+.primi-spark { transform-box: fill-box; transform-origin: center; animation: primi-twinkle 2.6s ease-in-out infinite; }
 
 .undo-toast { animation: toast-in var(--motion-slow) var(--ease-out); }
 .undo-toast[data-state='closing'] { pointer-events: none; animation: toast-out var(--motion-exit) var(--ease-in) forwards; }

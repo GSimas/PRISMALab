@@ -14,6 +14,8 @@
   display: flex; align-items: flex-start; justify-content: space-between; gap: .6rem;
   padding: .85rem 1rem; border-bottom: 1px solid var(--line); background: var(--paper-2);
 }
+.assistant-identity { display: flex; align-items: center; gap: .65rem; min-width: 0; }
+.assistant-avatar { display: grid; flex: 0 0 auto; place-items: center; width: 36px; height: 36px; border: 1px solid rgb(184 255 74 / 45%); border-radius: 50%; background: #07110f; color: #b8ff4a; box-shadow: 0 0 16px rgb(184 255 74 / 14%); }
 .assistant-panel-header strong { display: block; font: 600 .95rem var(--font-display); }
 .assistant-panel-header span { display: block; margin-top: .15rem; color: var(--muted); font-size: .66rem; line-height: 1.4; }
 .assistant-header-actions { display: flex; gap: .35rem; flex: 0 0 auto; }
