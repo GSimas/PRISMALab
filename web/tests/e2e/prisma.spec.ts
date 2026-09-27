@@ -100,6 +100,8 @@ test('dashboard, mobile e acessibilidade automática', async ({ page }, testInfo
   await page.addInitScript(() => localStorage.setItem('prisma-locale', 'pt-BR'));
   await page.goto('/projects');
   await expect(page.getByRole('heading', { name: /Projetos locais|Local projects/ })).toBeVisible();
+  // Let entrance animations settle: axe would otherwise sample text mid-fade.
+  await page.evaluate(() => Promise.all(document.getAnimations().filter((animation) => animation.effect?.getTiming().iterations !== Infinity).map((animation) => animation.finished)));
   const results = await new AxeBuilder({ page }).exclude('.prisma-svg').analyze();
   expect(results.violations).toEqual([]);
   await page.screenshot({ path: testInfo.outputPath('dashboard.png'), fullPage: true });
