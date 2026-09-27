@@ -8,20 +8,24 @@ test('cria os quatro modelos, valida inconsistência e persiste o projeto', asyn
   await expect(page.locator('main[data-app-ready="true"]')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Validação' })).toBeVisible();
   const databases = page.getByLabel('Registros identificados em bases');
-  const registers = page.getByLabel('Registros identificados em registros');
   const duplicates = page.getByLabel('Duplicatas removidas');
   await databases.fill('10');
-  await registers.fill('5');
   await page.locator('summary').filter({ hasText: 'Removidos antes da triagem' }).click();
   await duplicates.fill('99');
   await expect(page.getByText('Uma subtração do fluxo produz valor negativo')).toBeVisible();
   await duplicates.fill('2');
   await expect(page.getByText('Uma subtração do fluxo produz valor negativo')).toBeHidden();
+  // Per-database sources replace the direct count, which becomes their sum.
+  await page.getByRole('button', { name: '+ Scopus' }).click();
+  await page.locator('.database-item-row').getByLabel('Contagem').fill('12');
+  await expect(databases).toHaveValue('12');
+  await expect(databases).toBeDisabled();
   await page.getByLabel('Revisão atualizada').check();
   await page.locator('summary').filter({ hasText: 'Estudos anteriores' }).click();
   await expect(page.getByLabel('Estudos incluídos na versão anterior')).toBeVisible();
   await page.getByLabel('Utiliza outras fontes').check();
-  await expect(page.getByLabel('Registros ou relatos em sites')).toBeVisible();
+  // Other methods are entered as a source list (sites, organisations, citations…).
+  await expect(page.getByRole('heading', { name: 'Outros métodos (Sites, Organizações, Citações...)' })).toBeVisible();
   await expect(page.getByText('Salvo localmente')).toBeVisible({ timeout: 5000 });
   await expect(page.getByRole('radio', { name: 'Clássico PRISMA' })).toBeChecked();
   await expect(page.locator('.prisma-svg')).toHaveAttribute('data-style', 'classic');
@@ -29,7 +33,7 @@ test('cria os quatro modelos, valida inconsistência e persiste o projeto', asyn
   await expect(page.locator('.prisma-svg')).toHaveAttribute('data-style', 'modern');
   await expect(page.getByText('Salvo localmente')).toBeVisible({ timeout: 5000 });
   await page.reload();
-  await expect(databases).toHaveValue('10');
+  await expect(databases).toHaveValue('12');
   await expect(page.getByRole('radio', { name: 'Editorial moderno' })).toBeChecked();
 });
 
@@ -64,7 +68,7 @@ test('backup JSON, exportações e restauração', async ({ page }) => {
   await page.getByRole('tab', { name: 'Dados' }).click();
   await page.locator('.project-title-input').fill('Título alterado');
   await page.getByRole('tab', { name: 'Importar' }).click();
-  await page.getByLabel('Arquivo para importação').setInputFiles({
+  await page.getByLabel('Selecionar arquivo').setInputFiles({
     name: 'backup.json',
     mimeType: 'application/json',
     buffer: await readFile(backupPath!),
@@ -85,7 +89,7 @@ test('importa e valida tabelas CSV e XLSX', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('prisma-locale', 'pt-BR'));
   await page.goto('/projects');
   await expect(page.getByLabel('Idioma')).toBeEnabled();
-  const input = page.getByLabel('Arquivo para importação');
+  const input = page.getByLabel('Selecionar arquivo');
   await input.setInputFiles({
     name: 'contagens.csv',
     mimeType: 'text/csv',
