@@ -105,7 +105,7 @@ export function ProjectsDashboard() {
                   <span>{project.status === 'draft' ? t('draft') : project.status === 'review' ? t('inReview') : t('completed')}</span>
                   <time dateTime={project.updatedAt}>{new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(project.updatedAt))}</time>
                 </div>
-                <h2>{project.title}</h2>
+                <h2><a className="project-card-title" href={`/builder?project=${project.id}`}>{project.title}</a></h2>
                 <p>{project.reviewType} · {project.model.replaceAll('-', ' ')} · {project.locale}</p>
                 <div className="project-progress">
                   <span><i style={{ width: `${progressFor(project)}%` }} /></span>

@@ -9,9 +9,6 @@ export function GlobalFooter() {
     <>
       <footer className="global-footer">
         <p><a href="https://scientata.com" target="_blank" rel="noopener noreferrer">{t('scientataApp')}</a></p>
-        <nav aria-label="Links institucionais">
-          <a href="/about">{t('about')}</a>
-        </nav>
         <small>{t('independentTool')}</small>
       </footer>
       <aside className="coffee-region" aria-label={t('coffee')}>

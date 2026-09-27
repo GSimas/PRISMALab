@@ -37,7 +37,7 @@ export const tourSteps: TourStep[] = [
   { id: 'primi', target: '.assistant-fab', tab: 'data', assistant: 'closed' },
   { id: 'primiSetup', target: '.assistant-panel', tab: 'data', assistant: 'open' },
   { id: 'primiFill', target: '.assistant-panel', tab: 'data', assistant: 'open' },
-  { id: 'projects', target: '.desktop-nav a[href="/projects"], .mobile-menu > summary', tab: 'data', assistant: 'closed' },
+  { id: 'projects', target: '.header-primary', tab: 'data', assistant: 'closed' },
   { id: 'finish', tab: 'data', assistant: 'closed' },
 ];
 

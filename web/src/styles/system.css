@@ -183,7 +183,7 @@ th, td { padding: .65rem; border: 1px solid var(--line); text-align: left; font-
 @media (max-width: 650px) {
   :root { --header-height: 68px; }
   .global-header { padding-inline: .75rem; }
-  .brand small, .header-primary { display: none; }
+  .brand small { display: none; }
   /* Anchor dropdown panels to the header so they stay inside narrow screens. */
   .settings-menu { position: static; }
   .settings-panel { right: .75rem; top: calc(100% + .4rem); }

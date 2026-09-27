@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { Menu, Plus, Settings2 } from 'lucide-react';
+import { FolderOpen, Menu, Settings2 } from 'lucide-react';
 import { useApp } from '../app/AppProviders';
 import { localeNames } from '../i18n/translations';
 import { supportedLocales } from '../i18n/locale';
@@ -24,11 +24,11 @@ export function GlobalHeader() {
         </a>
         <nav className="desktop-nav" aria-label="Navegação principal">
           <a href="/learn">{t('learn')}</a>
-          <a href="/projects">{t('projects')}</a>
           <a href="/guidelines">{t('guidelines')}</a>
           <a href="/about">{t('about')}</a>
         </nav>
         <div className="header-tools">
+          <a className="header-primary" href="/projects" title={t('projects')}><FolderOpen size={16} aria-hidden="true" /> <span>{t('projects')}</span></a>
           <details className="settings-menu" ref={settingsMenu} onToggle={(event) => { if (event.currentTarget.open && navMenu.current) navMenu.current.open = false; }}>
             <summary aria-label={t('settings')} title={t('settings')}><Settings2 size={18} aria-hidden="true" /></summary>
             <div className="settings-panel">
@@ -58,12 +58,11 @@ export function GlobalHeader() {
             </div>
           </details>
           <a className="header-scientata-link" href="https://scientata.com" target="_blank" rel="noopener noreferrer" title="Scientata">Scientata</a>
-          <a className="header-primary" href="/builder"><Plus size={16} aria-hidden="true" /> <span>{t('newDiagram')}</span></a>
           <details className="mobile-menu" ref={navMenu} onToggle={(event) => { if (event.currentTarget.open && settingsMenu.current) settingsMenu.current.open = false; }}>
             <summary aria-label="Menu"><Menu size={20} aria-hidden="true" /></summary>
             <nav aria-label="Navegação móvel">
               <a href="/learn">{t('learn')}</a>
-              <a href="/projects">{t('projects')}</a><a href="/guidelines">{t('guidelines')}</a><a href="/about">{t('about')}</a>
+              <a href="/guidelines">{t('guidelines')}</a><a href="/about">{t('about')}</a>
             </nav>
           </details>
         </div>
