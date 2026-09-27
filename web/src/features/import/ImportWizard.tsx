@@ -46,7 +46,7 @@ export function ImportWizard({ onImport, compact = false }: { onImport: (project
 
   const confirm = () => {
     if (!preview) return;
-    const project = createProject({ title: `Imported from ${preview.name}` });
+    const project = createProject({ title: `${t('importedFrom')} ${preview.name}` });
     let imported = 0;
     preview.rows.forEach((row) => {
       const field = String(row[fieldColumn]).trim() as CountKey;
