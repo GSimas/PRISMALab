@@ -538,8 +538,17 @@ export function BuilderWorkspace() {
             <div className="canvas-label">
               <span>PRISMA 2020 · SVG</span>
               <div className="canvas-controls">
-                <label>{t('visualStyle')}<select aria-label={t('visualStyle')} value={project.presentation.diagramStyle ?? 'classic'} onChange={(event) => patchProject({ presentation: { ...project.presentation, diagramStyle: event.target.value as 'classic' | 'modern' } }, 'Visual do diagrama alterado')}><option value="classic">{t('classicStyle')}</option><option value="modern">{t('modernStyle')}</option></select></label>
-                <label>{t('structureMode')}<select aria-label={t('structureMode')} value={project.presentation.mode} onChange={(event) => patchProject({ presentation: { ...project.presentation, mode: event.target.value as 'prisma' | 'presentation' } })}><option value="prisma">{t('prismaMode')}</option><option value="presentation">{t('presentationMode')}</option></select></label>
+                <fieldset className="style-switch">
+                  <legend>{t('visualStyle')}</legend>
+                  <div>
+                    {(['classic', 'modern'] as const).map((value) => (
+                      <label key={value}>
+                        <input type="radio" name="diagram-style" value={value} checked={(project.presentation.diagramStyle ?? 'classic') === value} onChange={() => patchProject({ presentation: { ...project.presentation, diagramStyle: value } }, 'Visual do diagrama alterado')} />
+                        <span>{value === 'classic' ? t('classicStyle') : t('modernStyle')}</span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
               </div>
             </div>
             <PrismaDiagram project={project} locale={locale} selected={selected} onSelect={focusField} onSelectStage={focusStage} zoom={zoom} onZoom={(update) => setZoom((value) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, update(value))))} />

@@ -174,7 +174,7 @@
 input, select, textarea { transition: border-color var(--motion-base) var(--ease-out), box-shadow var(--motion-base) var(--ease-out), background-color var(--motion-base) var(--ease-out); }
 .diagram-node rect { transition: stroke var(--motion-base) var(--ease-out), fill var(--motion-base) var(--ease-out), stroke-width var(--motion-base) var(--ease-out); }
 .diagram-node { transition: filter var(--motion-base) var(--ease-out); }
-.classic-stage-band { transition: fill var(--motion-base) var(--ease-out); }
+.diagram-stage-band { transition: fill var(--motion-base) var(--ease-out); }
 .progress-ring { transition: --progress var(--motion-page) var(--ease-out); }
 .project-progress i { transition: width var(--motion-page) var(--ease-out); }
 .save-indicator span { transition: background-color var(--motion-base) var(--ease-out); }

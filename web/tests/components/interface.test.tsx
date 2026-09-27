@@ -90,9 +90,13 @@ describe('componentes essenciais', () => {
   it('renderiza a alternativa editorial moderna quando selecionada', () => {
     const project = createProject({ example: true });
     project.presentation.diagramStyle = 'modern';
+    project.model = 'new-databases-other';
     render(<PrismaDiagram project={project} locale="pt-BR" selected="databases" onSelect={() => undefined} />);
     expect(document.querySelector('.prisma-svg')).toHaveAttribute('data-style', 'modern');
-    expect(document.querySelector('.classic-chrome')).not.toBeInTheDocument();
+    // The modern style also frames the flow: stage bands on the left and column headers on top.
+    expect(screen.getAllByRole('button', { name: /^(Identificação|Triagem|Incluídos)\./ })).toHaveLength(3);
+    expect(screen.getByText('Identificação de novos estudos em bases de dados e registros')).toBeInTheDocument();
+    expect(screen.getByText('Identificação de novos estudos por outros métodos')).toBeInTheDocument();
   });
 
   it('expõe todos os formatos de exportação', () => {

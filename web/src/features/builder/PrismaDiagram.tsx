@@ -3,9 +3,9 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, type PointerEvent } from 'react';
 import type { CountKey, Locale, PrismaProject } from '../../domain/types';
 import { describeFlow } from '../../domain/calculations';
-import { getDiagramChrome, getDiagramConnections, getDiagramNodes } from './diagramModel';
+import { getDiagramChrome, getDiagramConnections, getDiagramNodes, type DiagramStage } from './diagramModel';
 
-export type DiagramStage = 'identification' | 'screening' | 'included';
+export type { DiagramStage };
 
 interface Props {
   project: PrismaProject;
@@ -28,7 +28,6 @@ export function PrismaDiagram({ project, locale, selected, onSelect, onSelectSta
   const nodes = useMemo(() => getDiagramNodes(project, locale, style), [project, locale, style]);
   const chrome = useMemo(() => getDiagramChrome(project, locale, style), [project, locale, style]);
   const connections = useMemo(() => getDiagramConnections(nodes, style), [nodes, style]);
-  const lastNodeBottom = Math.max(...nodes.map((node) => node.y + node.height));
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const pan = useRef<{ x: number; y: number; left: number; top: number; moved: boolean } | null>(null);
@@ -142,41 +141,35 @@ export function PrismaDiagram({ project, locale, selected, onSelect, onSelectSta
             <path d="M0,0 L0,6 L6,3 z" className="diagram-arrow-head" />
           </marker>
         </defs>
-        {style === 'classic' && (
-          <g className="classic-chrome">
-            <g aria-hidden="true">
-              <rect className="classic-source-header main-source" x="70" y="30" width="557" height="31" rx="15.5" />
-              <text className="classic-source-label" x="348.5" y="50">{chrome.mainHeader}</text>
-              {chrome.hasOtherSources && <>
-                <rect className="classic-source-header other-source" x="662" y="30" width="558" height="31" rx="15.5" />
-                <text className="classic-source-label" x="941" y="50">{chrome.otherHeader}</text>
-              </>}
-            </g>
-            {([
-              ['identification', chrome.identificationTop, chrome.screeningTop - chrome.identificationTop - 54, chrome.identification],
-              ['screening', chrome.screeningTop, chrome.includedTop - chrome.screeningTop - 18, chrome.screening],
-              ['included', chrome.includedTop, lastNodeBottom - chrome.includedTop + 15, chrome.included],
-            ] as [DiagramStage, number, number, string][]).map(([stage, y, height, label]) => (
-              <g
-                key={stage}
-                className="classic-stage-group"
-                role="button"
-                tabIndex={0}
-                aria-label={`${label}. Ir para o formulário desta etapa.`}
-                onClick={() => onSelectStage?.(stage)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    onSelectStage?.(stage);
-                  }
-                }}
-              >
-                <rect className="classic-stage-band" x="17" y={y} width="31" height={height} rx="11" />
-                <text className="classic-stage-label" transform={`translate(36 ${y + height / 2}) rotate(-90)`}>{label}</text>
+        <g className="diagram-chrome">
+          <g aria-hidden="true">
+            {chrome.headers.map((header) => (
+              <g key={header.id}>
+                <rect className={`diagram-header ${header.id}`} x={header.x} y={header.y} width={header.width} height={header.height} rx={chrome.headerRadius} />
+                <text className="diagram-header-label" x={header.x + header.width / 2} y={header.y + header.height / 2}>{header.label}</text>
               </g>
             ))}
           </g>
-        )}
+          {chrome.bands.map((band) => (
+            <g
+              key={band.stage}
+              className="diagram-stage"
+              role="button"
+              tabIndex={0}
+              aria-label={`${band.label}. Ir para o formulário desta etapa.`}
+              onClick={() => onSelectStage?.(band.stage)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  onSelectStage?.(band.stage);
+                }
+              }}
+            >
+              <rect className="diagram-stage-band" x={band.x} y={band.y} width={band.width} height={band.height} rx={chrome.bandRadius} />
+              <text className="diagram-stage-label" transform={`translate(${band.x + band.width / 2 + 3.5} ${band.y + band.height / 2}) rotate(-90)`}>{band.label}</text>
+            </g>
+          ))}
+        </g>
         <g aria-hidden="true" className="diagram-connections">
           {connections.map((connection) => <path key={connection.id} d={connection.d} markerEnd="url(#arrowhead)" />)}
         </g>
@@ -211,7 +204,7 @@ export function PrismaDiagram({ project, locale, selected, onSelect, onSelectSta
             </g>
           ))}
         </g>
-        <text x={style === 'classic' ? 70 : 22} y={chrome.height - 16} className="diagram-credit">{chrome.credit}</text>
+        <text x={chrome.creditX} y={chrome.height - 16} className="diagram-credit">{chrome.credit}</text>
       </svg>
     </div>
   );

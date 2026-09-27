@@ -17,19 +17,24 @@ export interface DiagramNode {
 
 export interface DiagramConnection { id: string; d: string; }
 
+export type DiagramStage = 'identification' | 'screening' | 'included';
+
+/** Column header above a pipeline ("via databases and registers" / "via other methods"). */
+export interface DiagramHeader { id: 'main' | 'other'; x: number; y: number; width: number; height: number; label: string; }
+/** Vertical stage band on the left edge (Identification, Screening, Included). */
+export interface DiagramBand { stage: DiagramStage; x: number; y: number; width: number; height: number; label: string; }
+
+/** Everything drawn around the boxes: size, column headers, stage bands and credit. Shared by the canvas and exporters. */
 export interface DiagramChrome {
   width: number;
   height: number;
-  mainHeader: string;
-  otherHeader: string;
-  identification: string;
-  screening: string;
-  included: string;
   credit: string;
+  creditX: number;
   hasOtherSources: boolean;
-  identificationTop: number;
-  screeningTop: number;
-  includedTop: number;
+  headers: DiagramHeader[];
+  bands: DiagramBand[];
+  headerRadius: number;
+  bandRadius: number;
 }
 
 const words: Record<Locale, Record<string, string>> = {
@@ -254,14 +259,14 @@ function getModernNodes(project: PrismaProject, locale: Locale): DiagramNode[] {
   const other = hasOtherSources(project.model);
   const updated = isUpdatedModel(project.model);
   const style: DiagramStyle = 'modern';
-  const mainX = other ? 70 : 280;
-  const sideX = other ? 400 : 525;
+  const mainX = 70;
+  const sideX = 400;
   const otherX = 730;
   const otherSideX = 1060;
   const width = 300;
   const gap = 40;
   const nodes: DiagramNode[] = [];
-  let y = 45;
+  let y = 105;
 
   if (updated) {
     const lines = buildLines(w.previous, [`${n('previousStudies')} ${w.studies} · ${n('previousReports')} ${w.reports}`], width, style);
@@ -323,16 +328,52 @@ export function getDiagramNodes(project: PrismaProject, locale: Locale, style: D
 export function getDiagramChrome(project: PrismaProject, locale: Locale, style: DiagramStyle = project.presentation.diagramStyle ?? 'classic'): DiagramChrome {
   const nodes = getDiagramNodes(project, locale, style);
   const w = words[locale];
-  const classic = style === 'classic';
   const hasOther = hasOtherSources(project.model);
-  const screened = nodes.find((node) => node.id === 'screened')!;
-  const included = nodes.find((node) => node.id === 'newStudies')!;
-  const identified = nodes.find((node) => node.id === 'identified-main')!;
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const node = (id: DiagramNode['id']) => byId.get(id)!;
+  const bottom = (...ids: DiagramNode['id'][]) => Math.max(...ids.filter((id) => byId.has(id)).map((id) => node(id).y + node(id).height));
+  const lastNodeBottom = Math.max(...nodes.map((item) => item.y + item.height));
+  const band = (stage: DiagramStage, y: number, height: number, label: string, x: number, width: number): DiagramBand => ({ stage, x, y, width, height, label });
+
+  if (style === 'classic') {
+    // Geometry of the official PRISMA 2020 template.
+    const identificationTop = node('identified-main').y - 37;
+    const screeningTop = node('screened').y;
+    const includedTop = node('newStudies').y - 56;
+    return {
+      width: hasOther ? 1240 : 660,
+      height: Math.max(lastNodeBottom, 650) + 55,
+      credit: w.credit, creditX: 70, hasOtherSources: hasOther, headerRadius: 15.5, bandRadius: 11,
+      headers: [
+        { id: 'main', x: 70, y: 30, width: 557, height: 31, label: w.mainHeader },
+        ...(hasOther ? [{ id: 'other' as const, x: 662, y: 30, width: 558, height: 31, label: w.otherHeader }] : []),
+      ],
+      bands: [
+        band('identification', identificationTop, screeningTop - identificationTop - 54, w.identification, 17, 31),
+        band('screening', screeningTop, includedTop - screeningTop - 18, w.screening, 17, 31),
+        band('included', includedTop, lastNodeBottom - includedTop + 15, w.includedStage, 17, 31),
+      ],
+    };
+  }
+
+  // Modern editorial: bands hug the rows of each stage in the main column.
+  const identifiedTop = node('identified-main').y;
+  const screenedTop = node('screened').y;
+  const includedTop = node('newStudies').y;
+  const columnWidth = 630; // box + gap + side box
   return {
-    width: classic ? (hasOther ? 1240 : 660) : (hasOther ? 1430 : 880),
-    height: Math.max(...nodes.map((node) => node.y + node.height), 650) + (classic ? 55 : 50),
-    mainHeader: w.mainHeader, otherHeader: w.otherHeader, identification: w.identification, screening: w.screening, included: w.includedStage, credit: w.credit,
-    hasOtherSources: hasOther, identificationTop: identified.y - 37, screeningTop: screened.y, includedTop: included.y - 56,
+    width: hasOther ? 1430 : 770,
+    height: Math.max(lastNodeBottom, 650) + 50,
+    credit: w.credit, creditX: 70, hasOtherSources: hasOther, headerRadius: 2, bandRadius: 2,
+    headers: [
+      { id: 'main', x: 70, y: 40, width: columnWidth, height: 34, label: w.mainHeader },
+      ...(hasOther ? [{ id: 'other' as const, x: 730, y: 40, width: columnWidth, height: 34, label: w.otherHeader }] : []),
+    ],
+    bands: [
+      band('identification', identifiedTop, bottom('identified-main', 'removed') - identifiedTop, w.identification, 22, 30),
+      band('screening', screenedTop, bottom('reportsAssessed', 'reportsExcluded') - screenedTop, w.screening, 22, 30),
+      band('included', includedTop, bottom('newStudies', 'totalStudies') - includedTop, w.includedStage, 22, 30),
+    ],
   };
 }
 
