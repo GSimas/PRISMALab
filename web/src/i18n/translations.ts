@@ -253,6 +253,17 @@ const en = {
   assistantNewChatBody: 'The messages in this conversation will be deleted and cannot be recovered. Changes already applied to the diagram are kept.',
   assistantNewChatConfirm: 'Clear and start new',
   assistantOwnKeyDivider: 'or use your own API key (BYOK)',
+  completenessLabel: 'Diagram completeness',
+  stagesLabel: 'stages',
+  nextStep: 'Next',
+  diagramComplete: 'Diagram complete',
+  reviewAlerts: 'Review the alerts',
+  stageStatusComplete: 'complete',
+  stageStatusInProgress: 'in progress',
+  stageStatusPending: 'not started',
+  stageStatusAttention: 'needs review',
+  stageCompleted: 'Stage complete',
+  pendingNode: 'Pending',
 };
 
 export type TranslationKey = keyof typeof en;
@@ -501,6 +512,17 @@ const pt: Record<TranslationKey, string> = {
   assistantNewChatBody: 'As mensagens desta conversa serão apagadas e não poderão ser recuperadas. As alterações já aplicadas ao diagrama são mantidas.',
   assistantNewChatConfirm: 'Limpar e abrir nova',
   assistantOwnKeyDivider: 'ou use sua própria chave de API (BYOK)',
+  completenessLabel: 'Completude do diagrama',
+  stagesLabel: 'etapas',
+  nextStep: 'Próximo',
+  diagramComplete: 'Diagrama completo',
+  reviewAlerts: 'Revise os alertas',
+  stageStatusComplete: 'concluída',
+  stageStatusInProgress: 'em andamento',
+  stageStatusPending: 'não iniciada',
+  stageStatusAttention: 'requer revisão',
+  stageCompleted: 'Etapa concluída',
+  pendingNode: 'Pendente',
 };
 
 const it: Record<TranslationKey, string> = {
@@ -726,6 +748,17 @@ const it: Record<TranslationKey, string> = {
   assistantNewChatBody: 'I messaggi di questa conversazione verranno eliminati e non potranno essere recuperati. Le modifiche già applicate al diagramma restano.',
   assistantNewChatConfirm: 'Cancella e inizia',
   assistantOwnKeyDivider: 'oppure usa la tua chiave API (BYOK)',
+  completenessLabel: 'Completezza del diagramma',
+  stagesLabel: 'fasi',
+  nextStep: 'Prossimo',
+  diagramComplete: 'Diagramma completo',
+  reviewAlerts: 'Controlla gli avvisi',
+  stageStatusComplete: 'completata',
+  stageStatusInProgress: 'in corso',
+  stageStatusPending: 'non iniziata',
+  stageStatusAttention: 'da rivedere',
+  stageCompleted: 'Fase completata',
+  pendingNode: 'In attesa',
 };
 
 const fr: Record<TranslationKey, string> = {
@@ -951,6 +984,17 @@ const fr: Record<TranslationKey, string> = {
   assistantNewChatBody: 'Les messages de cette conversation seront supprimés et ne pourront pas être récupérés. Les modifications déjà appliquées au diagramme sont conservées.',
   assistantNewChatConfirm: 'Effacer et recommencer',
   assistantOwnKeyDivider: 'ou utilisez votre propre clé API (BYOK)',
+  completenessLabel: 'Complétude du diagramme',
+  stagesLabel: 'étapes',
+  nextStep: 'Suivant',
+  diagramComplete: 'Diagramme complet',
+  reviewAlerts: 'Vérifiez les alertes',
+  stageStatusComplete: 'terminée',
+  stageStatusInProgress: 'en cours',
+  stageStatusPending: 'non commencée',
+  stageStatusAttention: 'à vérifier',
+  stageCompleted: 'Étape terminée',
+  pendingNode: 'En attente',
 };
 
 const de: Record<TranslationKey, string> = {
@@ -1176,6 +1220,17 @@ const de: Record<TranslationKey, string> = {
   assistantNewChatBody: 'Die Nachrichten dieser Unterhaltung werden gelöscht und können nicht wiederhergestellt werden. Bereits auf das Diagramm angewendete Änderungen bleiben erhalten.',
   assistantNewChatConfirm: 'Löschen und neu beginnen',
   assistantOwnKeyDivider: 'oder eigenen API-Schlüssel verwenden (BYOK)',
+  completenessLabel: 'Vollständigkeit des Diagramms',
+  stagesLabel: 'Schritte',
+  nextStep: 'Weiter',
+  diagramComplete: 'Diagramm vollständig',
+  reviewAlerts: 'Hinweise prüfen',
+  stageStatusComplete: 'abgeschlossen',
+  stageStatusInProgress: 'in Bearbeitung',
+  stageStatusPending: 'nicht begonnen',
+  stageStatusAttention: 'prüfen',
+  stageCompleted: 'Schritt abgeschlossen',
+  pendingNode: 'Ausstehend',
 };
 
 const zh: Record<TranslationKey, string> = {
@@ -1401,6 +1456,17 @@ const zh: Record<TranslationKey, string> = {
   assistantNewChatBody: '当前对话中的消息将被删除且无法恢复。已应用到流程图的更改会保留。',
   assistantNewChatConfirm: '清空并新建',
   assistantOwnKeyDivider: '或使用您自己的 API 密钥（BYOK）',
+  completenessLabel: '流程图完成度',
+  stagesLabel: '个阶段',
+  nextStep: '下一步',
+  diagramComplete: '流程图已完成',
+  reviewAlerts: '请检查提示',
+  stageStatusComplete: '已完成',
+  stageStatusInProgress: '进行中',
+  stageStatusPending: '未开始',
+  stageStatusAttention: '需复核',
+  stageCompleted: '阶段已完成',
+  pendingNode: '待填写',
 };
 
 export const translations: Record<Locale, Record<TranslationKey, string>> = {

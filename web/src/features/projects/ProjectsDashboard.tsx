@@ -5,7 +5,8 @@ import { Copy, Download, FilePlus2, FolderOpen, Pencil, Search, Trash2 } from 'l
 import { useApp } from '../../app/AppProviders';
 import { usePresence } from '../../app/usePresence';
 import { createProject } from '../../domain/project';
-import { progressFor, validateProject } from '../../domain/validation';
+import { progressFor } from '../../domain/completeness';
+import { validateProject } from '../../domain/validation';
 import type { PrismaProject, ProjectStatus } from '../../domain/types';
 import { deleteProject, duplicateProject, listProjects, saveProject } from '../../storage/db';
 import { exportProject } from '../export/exporters';

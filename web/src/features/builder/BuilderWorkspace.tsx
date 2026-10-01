@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
-import { Compass, Download, FileCheck2, Focus, HelpCircle, Maximize2, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Redo2, Sparkles, Trash2, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowRight, Circle, CircleCheck, CircleDashed, Compass, Download, FileCheck2, Focus, HelpCircle, Maximize2, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Redo2, Sparkles, Trash2, TriangleAlert, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
 import { useApp } from '../../app/AppProviders';
 import { useProjectStore } from '../../app/store';
 import { usePresence } from '../../app/usePresence';
 import { calculateProject, emptyCounts, hasOtherSources, isUpdatedModel, selectModel } from '../../domain/calculations';
 import { createExampleChecklist, createChecklist } from '../../domain/checklist';
+import { bandProgress, completenessFor, type CompletenessStageId, type StageStatus } from '../../domain/completeness';
 import { createProject } from '../../domain/project';
 import { countKeys, type CountKey, type NodeProvenance, type PrismaProject, type SourceItem, type ValidationIssue } from '../../domain/types';
 import { validateProject } from '../../domain/validation';
@@ -23,15 +24,29 @@ import { tourSteps, type BuilderTab, type TourStep } from '../tour/steps';
 /** Opens or closes the Primi panel (listened to by PrismaAssistant). */
 const setAssistantOpen = (open: boolean) => window.dispatchEvent(new CustomEvent('prisma:assistant', { detail: { open } }));
 
-const fieldSections: { titleKey: TranslationKey; slug: string; fields: CountKey[] }[] = [
-  { titleKey: 'sectionPrevious', slug: 'previous', fields: ['previousStudies', 'previousReports'] },
-  { titleKey: 'sectionIdentification', slug: 'identification', fields: ['databases'] },
-  { titleKey: 'sectionRemoved', slug: 'removed', fields: ['duplicates', 'automationExcluded', 'removedOther'] },
-  { titleKey: 'sectionScreening', slug: 'screening', fields: ['screened', 'recordsExcluded', 'reportsSought', 'reportsNotRetrieved'] },
-  { titleKey: 'sectionEligibility', slug: 'eligibility', fields: ['reportsAssessed', 'reportsExcluded'] },
-  { titleKey: 'sectionOtherMethods', slug: 'other-methods', fields: ['otherReportsSought', 'otherReportsNotRetrieved', 'otherReportsAssessed', 'otherReportsExcluded'] },
-  { titleKey: 'sectionInclusion', slug: 'sectionInclusion', fields: ['newStudies', 'newReports', 'totalStudies', 'totalReports'] },
+const fieldSections: { titleKey: TranslationKey; slug: string; stage: CompletenessStageId; fields: CountKey[] }[] = [
+  { titleKey: 'sectionPrevious', slug: 'previous', stage: 'previous', fields: ['previousStudies', 'previousReports'] },
+  { titleKey: 'sectionIdentification', slug: 'identification', stage: 'identification', fields: ['databases'] },
+  { titleKey: 'sectionRemoved', slug: 'removed', stage: 'removed', fields: ['duplicates', 'automationExcluded', 'removedOther'] },
+  { titleKey: 'sectionScreening', slug: 'screening', stage: 'screening', fields: ['screened', 'recordsExcluded', 'reportsSought', 'reportsNotRetrieved'] },
+  { titleKey: 'sectionEligibility', slug: 'eligibility', stage: 'eligibility', fields: ['reportsAssessed', 'reportsExcluded'] },
+  { titleKey: 'sectionOtherMethods', slug: 'other-methods', stage: 'other-methods', fields: ['otherReportsSought', 'otherReportsNotRetrieved', 'otherReportsAssessed', 'otherReportsExcluded'] },
+  { titleKey: 'sectionInclusion', slug: 'sectionInclusion', stage: 'inclusion', fields: ['newStudies', 'newReports', 'totalStudies', 'totalReports'] },
 ];
+
+const stageStatusKey: Record<StageStatus, TranslationKey> = {
+  complete: 'stageStatusComplete',
+  'in-progress': 'stageStatusInProgress',
+  pending: 'stageStatusPending',
+  attention: 'stageStatusAttention',
+};
+
+const stageIcons: Record<StageStatus, ReactNode> = {
+  complete: <CircleCheck size={15} aria-hidden="true" />,
+  'in-progress': <CircleDashed size={15} aria-hidden="true" />,
+  pending: <Circle size={15} aria-hidden="true" />,
+  attention: <TriangleAlert size={15} aria-hidden="true" />,
+};
 
 const optionalFields: CountKey[] = ['automationExcluded', 'removedOther'];
 
@@ -64,6 +79,13 @@ export function BuilderWorkspace() {
 
   const calculated = useMemo(() => calculateProject(project), [project]);
   const issues = useMemo(() => validateProject(project, locale), [project, locale]);
+  const completeness = useMemo(() => completenessFor(project, issues), [project, issues]);
+  const stagesDone = completeness.stages.filter((stage) => stage.status === 'complete').length;
+  const stageTitle = (id: CompletenessStageId) => t(fieldSections.find((section) => section.stage === id)!.titleKey);
+  // Announces finished stages to screen readers and plays the "complete" cue once per transition.
+  const [progressMessage, setProgressMessage] = useState('');
+  const [celebrate, setCelebrate] = useState(false);
+  const previousProgress = useRef<{ id: string; statuses: Map<CompletenessStageId, StageStatus>; complete: boolean } | null>(null);
 
   const setPanels = (next: Panels) => {
     setCollapsed(next);
@@ -110,6 +132,37 @@ export function BuilderWorkspace() {
   };
 
   const focusStage = (stage: DiagramStage) => focusById(`section-${stage}`);
+
+  /** Jumps to a field from anywhere in the builder, switching back to the data tab first. */
+  const goToField = (field: CountKey) => {
+    if (tab !== 'data') flushSync(() => setTab('data'));
+    focusField(field);
+  };
+
+  const reviewFirstAlert = () => {
+    const first = issues.find((item) => item.status === 'inconsistency');
+    if (!first) return;
+    if (tab !== 'data') flushSync(() => setTab('data'));
+    handleIssueClick(first);
+  };
+
+  useEffect(() => {
+    const statuses = new Map(completeness.stages.map((stage) => [stage.id, stage.status]));
+    const before = previousProgress.current;
+    previousProgress.current = { id: project.id, statuses, complete: completeness.complete };
+    // A newly loaded project is a baseline, not progress.
+    if (!before || before.id !== project.id) return;
+    const finished = completeness.stages.filter((stage) => stage.status === 'complete' && before.statuses.get(stage.id) !== 'complete');
+    const justCompleted = completeness.complete && !before.complete;
+    if (!finished.length && !justCompleted) return;
+    const message = justCompleted ? t('diagramComplete') : `${t('stageCompleted')}: ${finished.map((stage) => stageTitle(stage.id)).join(', ')}`;
+    const announce = window.setTimeout(() => { setProgressMessage(message); if (justCompleted) setCelebrate(true); }, 0);
+    const settle = justCompleted ? window.setTimeout(() => setCelebrate(false), 1600) : undefined;
+    return () => { window.clearTimeout(announce); window.clearTimeout(settle); };
+  }, [completeness, project.id]); // eslint-disable-line react-hooks/exhaustive-deps -- t/stageTitle only format the message
+
+  const nextLabel = completeness.next ? (completeness.next.field === 'websites' ? t('sectionOtherMethods') : labels[completeness.next.field]) : '';
+  const allFilled = completeness.filled === completeness.total;
 
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('project') ?? localStorage.getItem('prisma-last-project');
@@ -354,7 +407,37 @@ export function BuilderWorkspace() {
           <p className="kicker">{project.guideline} · {project.model.replaceAll('-', ' ')}</p>
           <input className="project-title-input" aria-label={t('title')} value={project.title} onChange={(event) => patchProject({ title: event.target.value }, 'Título alterado')} />
         </div>
-        <div className="save-indicator" role="status" aria-live="polite"><span className={saveState} />{saveState === 'saving' ? t('saving') : t('saved')}</div>
+        <div className="builder-header-status">
+          <div className={`builder-progress${completeness.complete ? ' is-complete' : ''}${celebrate ? ' celebrate' : ''}`}>
+            <div
+              className="completeness-ring"
+              role="progressbar"
+              aria-label={t('completenessLabel')}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={completeness.percent}
+              aria-valuetext={`${completeness.percent}% · ${stagesDone}/${completeness.stages.length} ${t('stagesLabel')}`}
+            >
+              <svg viewBox="0 0 36 36" aria-hidden="true">
+                <circle className="completeness-track" cx="18" cy="18" r="15" />
+                <circle className="completeness-bar" cx="18" cy="18" r="15" pathLength={100} strokeDasharray={`${completeness.percent} 100`} />
+              </svg>
+              <span aria-hidden="true">{completeness.complete ? <CircleCheck size={16} /> : `${completeness.percent}%`}</span>
+            </div>
+            <div className="progress-copy">
+              <strong>{completeness.complete ? t('diagramComplete') : allFilled ? t('reviewAlerts') : `${stagesDone}/${completeness.stages.length} ${t('stagesLabel')}`}</strong>
+              {completeness.next ? (
+                <button type="button" className="progress-action" disabled={!ready} onClick={() => goToField(completeness.next!.field)} title={`${t('nextStep')}: ${nextLabel}`}><span>{t('nextStep')}: {nextLabel}</span> <ArrowRight size={13} aria-hidden="true" /></button>
+              ) : completeness.complete ? (
+                <button type="button" className="progress-action" disabled={!ready} onClick={() => setTab('export')}>{t('export')} <ArrowRight size={13} aria-hidden="true" /></button>
+              ) : (
+                <button type="button" className="progress-action" disabled={!ready} onClick={reviewFirstAlert}>{t('validation')} <ArrowRight size={13} aria-hidden="true" /></button>
+              )}
+            </div>
+            <div className="sr-only" role="status" aria-live="polite">{progressMessage}</div>
+          </div>
+          <div className="save-indicator" role="status" aria-live="polite"><span className={saveState} />{saveState === 'saving' ? t('saving') : t('saved')}</div>
+        </div>
       </header>
 
       <div className="builder-toolbar" aria-label="Ferramentas do diagrama">
@@ -408,9 +491,14 @@ export function BuilderWorkspace() {
               const fields = section.fields.filter(applicable);
               if (!fields.length && section.slug !== 'other-methods') return null;
               if (!fields.length && section.slug === 'other-methods' && !hasOtherSources(project.model)) return null;
+              const stage = completeness.stages.find((item) => item.id === section.stage);
               return (
-                <details className="form-section" id={`section-${section.slug}`} key={section.slug} open={section.slug === 'identification' || section.slug === 'other-methods'}>
-                  <summary>{t(section.titleKey)}<span>{fields.filter((field) => calculated.values[field] !== null).length}/{fields.length}</span></summary>
+                <details className="form-section" id={`section-${section.slug}`} key={section.slug} data-status={stage?.status} open={section.slug === 'identification' || section.slug === 'other-methods'}>
+                  <summary>
+                    {stage && <span className="stage-status">{stageIcons[stage.status]}</span>}
+                    <span className="stage-title">{t(section.titleKey)}{stage && <span className="sr-only"> ({t(stageStatusKey[stage.status])})</span>}</span>
+                    {stage && <span className="stage-count">{stage.filled}/{stage.total}</span>}
+                  </summary>
                   <div>
                     {section.slug === 'other-methods' && renderOtherSourcesBlock()}
                     {fields.map((field) => {
@@ -551,7 +639,7 @@ export function BuilderWorkspace() {
                 </fieldset>
               </div>
             </div>
-            <PrismaDiagram project={project} locale={locale} selected={selected} onSelect={focusField} onSelectStage={focusStage} zoom={zoom} onZoom={(update) => setZoom((value) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, update(value))))} />
+            <PrismaDiagram project={project} locale={locale} selected={selected} onSelect={focusField} onSelectStage={focusStage} progress={{ ready: completeness.ready, bands: bandProgress(completeness), pendingLabel: t('pendingNode'), completeLabel: t('stageStatusComplete') }} zoom={zoom} onZoom={(update) => setZoom((value) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, update(value))))} />
             <details className="diagram-alternative">
               <summary>{t('tabularAlternative')}</summary>
               <table><thead><tr><th>{t('stage')}</th><th>{t('value')}</th><th>{t('origin')}</th></tr></thead><tbody>{countKeys.filter(applicable).map((field) => <tr key={field}><th>{labels[field]}</th><td>{calculated.values[field] ?? '—'}</td><td>{calculated.origins[field]}</td></tr>)}</tbody></table>

@@ -1,5 +1,6 @@
 import { calculateProject } from '../../domain/calculations';
-import { validateProject, progressFor } from '../../domain/validation';
+import { progressFor } from '../../domain/completeness';
+import { validateProject } from '../../domain/validation';
 import { countKeys, type Locale, type PrismaProject } from '../../domain/types';
 import { localeNames } from '../../i18n/translations';
 import { buildProposalInstructions } from './proposals';

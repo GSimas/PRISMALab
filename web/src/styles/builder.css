@@ -1,6 +1,23 @@
 .builder-page { min-height: calc(100vh - var(--header-height)); background: var(--paper); }
 .builder-project-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.2rem; border-bottom: 1px solid var(--line); background: var(--paper-2); }
 .builder-project-header .kicker { margin: 0 0 .25rem; }
+.builder-header-status { display: flex; flex: none; align-items: center; gap: 1.4rem; }
+/* Completeness: a ring with the share of required inputs filled, plus a shortcut to what comes next. */
+.builder-progress { display: flex; align-items: center; gap: .7rem; }
+.completeness-ring { position: relative; display: grid; flex: none; place-items: center; width: 42px; height: 42px; border-radius: 50%; }
+.completeness-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; }
+.completeness-ring circle { fill: none; stroke-width: 3.5; }
+.completeness-track { stroke: var(--line); }
+.completeness-bar { stroke: var(--accent); transition: stroke-dasharray var(--motion-slow, .45s) var(--ease-out, ease), stroke var(--motion-base, .2s) var(--ease-out, ease); }
+.completeness-ring > span { display: inline-flex; color: var(--ink); font: 500 .6rem var(--font-mono); }
+.builder-progress.is-complete .completeness-bar { stroke: var(--green); }
+.builder-progress.is-complete .completeness-ring > span { color: var(--green); }
+.progress-copy { display: grid; justify-items: start; gap: .15rem; min-width: 0; }
+.progress-copy strong { color: var(--ink); font: 600 .74rem var(--font-sans); }
+.progress-action { display: inline-flex; align-items: center; gap: .3rem; max-width: 300px; padding: 0; border: 0; background: none; color: var(--accent); font: .68rem var(--font-sans); text-align: left; }
+.progress-action span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.progress-action svg { flex: none; }
+.progress-action:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
 .project-title-input { min-width: min(680px, 60vw); border: 0; background: transparent; padding: 0; color: var(--ink); font: 500 1.35rem var(--font-display); }
 .save-indicator { display: flex; align-items: center; gap: .5rem; color: var(--muted); font: .64rem var(--font-mono); text-transform: uppercase; }
 .save-indicator span { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
@@ -58,8 +75,13 @@
 .project-setup { display: grid; gap: .8rem; }
 .project-setup fieldset { display: grid; gap: .55rem; }
 .form-section { border-bottom: 1px solid var(--line); }
-.form-section > summary { display: flex; justify-content: space-between; padding: .85rem 1rem; cursor: pointer; color: var(--ink); font: 750 .68rem var(--font-mono); text-transform: uppercase; }
-.form-section > summary span { color: var(--muted); }
+.form-section > summary { display: flex; align-items: center; gap: .55rem; padding: .85rem 1rem; cursor: pointer; color: var(--ink); font: 750 .68rem var(--font-mono); text-transform: uppercase; }
+.form-section > summary .stage-title { flex: 1; }
+.form-section > summary .stage-count { color: var(--muted); font-weight: 500; }
+.stage-status { display: inline-flex; flex: none; color: var(--muted); transition: color var(--motion-base, .2s) var(--ease-out, ease); }
+.form-section[data-status='in-progress'] .stage-status { color: var(--accent); }
+.form-section[data-status='complete'] .stage-status, .form-section[data-status='complete'] .stage-count { color: var(--green); }
+.form-section[data-status='attention'] .stage-status { color: var(--red); }
 .form-section > div { display: grid; gap: .75rem; padding: 0 1rem 1rem; }
 .count-field { grid-template-columns: 1fr 86px; align-items: center; gap: .25rem .7rem; }
 .count-field > span { color: var(--ink); font-size: .74rem; font-weight: 650; line-height: 1.25; }
@@ -156,6 +178,18 @@
 .prisma-svg-classic .diagram-node:hover rect, .prisma-svg-classic .diagram-node:focus rect { fill: #fff4d6; stroke: #aa6900; stroke-width: 2; }
 .prisma-svg-classic .diagram-node.other:hover rect, .prisma-svg-classic .diagram-node.other:focus rect { fill: #e8d7ad; }
 .prisma-svg-classic .diagram-node.selected rect { stroke: #aa6900; stroke-width: 2.5; }
+/* Editor-only progress cues (never exported): boxes still waiting for data, and stage bands that fill up. */
+.diagram-node.pending rect { stroke-dasharray: 6 4; }
+.prisma-svg-modern .diagram-node.pending:not(:hover, :focus, .selected) rect { fill: transparent; stroke: var(--line-strong); }
+.prisma-svg-modern .diagram-node.pending text { fill: var(--muted); }
+.prisma-svg-classic .diagram-node.pending:not(:hover, :focus, .selected) rect { stroke: #9a9a9a; }
+.prisma-svg-classic .diagram-node.other.pending:not(:hover, :focus, .selected) rect { fill: #eee; stroke: #b5b5b5; }
+.prisma-svg-classic .diagram-node.pending .node-heading, .prisma-svg-classic .diagram-node.pending .node-line { fill: #767676; }
+.diagram-stage-progress { pointer-events: none; transition: y var(--motion-slow, .45s) var(--ease-out, ease), height var(--motion-slow, .45s) var(--ease-out, ease); }
+.prisma-svg-classic .diagram-stage-progress { fill: #7fadea; }
+.prisma-svg-modern .diagram-stage-progress { fill: color-mix(in srgb, var(--cyan) 32%, transparent); }
+.prisma-svg-classic .diagram-stage.complete .diagram-stage-progress { fill: #8fd3a0; }
+.prisma-svg-modern .diagram-stage.complete .diagram-stage-progress { fill: color-mix(in srgb, var(--green) 38%, transparent); }
 .prisma-svg-classic .node-heading, .prisma-svg-classic .node-line { fill: #000; font: 12px Arial, 'Noto Sans SC', sans-serif; }
 .prisma-svg-classic .node-heading { font-weight: 400; }
 .prisma-svg-classic .diagram-credit { fill: #505050; font: 10px Arial, 'Noto Sans SC', sans-serif; }
@@ -221,6 +255,8 @@
 }
 @media (max-width: 780px) {
   .builder-project-header { align-items: flex-start; flex-direction: column; }
+  .builder-header-status { flex-wrap: wrap; gap: .8rem 1.4rem; max-width: 100%; }
+  .builder-progress, .progress-copy { min-width: 0; max-width: 100%; }
   .project-title-input { min-width: 0; width: 100%; }
   .builder-toolbar button span, .builder-toolbar a span { display: none; }
   .builder-workspace { display: flex; flex-direction: column; }
@@ -248,6 +284,8 @@
   .diagram-panel { overflow: visible; background: #fff; }
   .diagram-scroller { height: auto; overflow: visible; padding: 0; }
   .prisma-svg { width: 100%; height: auto; border: 0; box-shadow: none; }
+  .diagram-stage-progress { display: none; }
+  .diagram-node.pending rect { stroke-dasharray: none; }
 }
 
 /* Guided tour: a dimmed page with a highlighted target and an explanation card. */

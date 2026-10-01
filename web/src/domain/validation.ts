@@ -485,9 +485,3 @@ export function validateProject(project: PrismaProject, locale: Locale = 'pt-BR'
   }
   return result;
 }
-
-export const progressFor = (project: PrismaProject) => {
-  const required = ['databases', 'duplicates', 'recordsExcluded', 'reportsNotRetrieved', 'reportsExcluded', 'newStudies'] as CountKey[];
-  const filled = required.filter((key) => project.counts[key] !== null).length;
-  return Math.round((filled / required.length) * 100);
-};

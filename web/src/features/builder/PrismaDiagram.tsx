@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useMemo, useRef, type PointerEvent } from 'react';
+import type { BandProgress } from '../../domain/completeness';
 import type { CountKey, Locale, PrismaProject } from '../../domain/types';
 import { describeFlow } from '../../domain/calculations';
-import { getDiagramChrome, getDiagramConnections, getDiagramNodes, type DiagramStage } from './diagramModel';
+import { getDiagramChrome, getDiagramConnections, getDiagramNodes, type DiagramNode, type DiagramStage } from './diagramModel';
 
 export type { DiagramStage };
 
@@ -16,14 +17,30 @@ interface Props {
   zoom?: number;
   /** Requests a zoom change from the canvas (Ctrl/⌘ + wheel, trackpad pinch); the owner clamps it. */
   onZoom?: (update: (zoom: number) => number) => void;
+  /** Editor-only completeness overlay: dims boxes still waiting for data and fills the stage bands. */
+  progress?: DiagramProgress;
 }
+
+export interface DiagramProgress {
+  ready: Record<CountKey, boolean>;
+  bands: Record<DiagramStage, BandProgress>;
+  pendingLabel: string;
+  completeLabel: string;
+}
+
+/** A box is settled once every value printed in it is determined. */
+const nodeReady = (node: DiagramNode, ready: Record<CountKey, boolean>) => {
+  if (node.id === 'newStudies') return ready.newStudies && ready.newReports;
+  if (node.id === 'totalStudies') return ready.totalStudies && ready.totalReports;
+  return ready[node.field];
+};
 
 /** Pointer travel (px) before a press on the canvas becomes a pan instead of a click. */
 const PAN_THRESHOLD = 4;
 /** Wheel sensitivity: 100px of wheel delta ≈ 20% zoom. Exponential so trackpad pinch stays smooth. */
 const WHEEL_ZOOM_SPEED = 0.002;
 
-export function PrismaDiagram({ project, locale, selected, onSelect, onSelectStage, zoom = 1, onZoom }: Props) {
+export function PrismaDiagram({ project, locale, selected, onSelect, onSelectStage, zoom = 1, onZoom, progress }: Props) {
   const style = project.presentation.diagramStyle ?? 'classic';
   const nodes = useMemo(() => getDiagramNodes(project, locale, style), [project, locale, style]);
   const chrome = useMemo(() => getDiagramChrome(project, locale, style), [project, locale, style]);
@@ -150,13 +167,16 @@ export function PrismaDiagram({ project, locale, selected, onSelect, onSelectSta
               </g>
             ))}
           </g>
-          {chrome.bands.map((band) => (
+          {chrome.bands.map((band) => {
+            const bandState = progress?.bands[band.stage];
+            const filledHeight = band.height * (bandState?.fraction ?? 0);
+            return (
             <g
               key={band.stage}
-              className="diagram-stage"
+              className={`diagram-stage${bandState?.complete ? ' complete' : ''}`}
               role="button"
               tabIndex={0}
-              aria-label={`${band.label}. Ir para o formulário desta etapa.`}
+              aria-label={`${band.label}${bandState?.complete ? ` (${progress!.completeLabel})` : ''}. Ir para o formulário desta etapa.`}
               onClick={() => onSelectStage?.(band.stage)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
@@ -166,21 +186,30 @@ export function PrismaDiagram({ project, locale, selected, onSelect, onSelectSta
               }}
             >
               <rect className="diagram-stage-band" x={band.x} y={band.y} width={band.width} height={band.height} rx={chrome.bandRadius} />
+              {bandState && (
+                <>
+                  <clipPath id={`band-clip-${band.stage}`}><rect x={band.x} y={band.y} width={band.width} height={band.height} rx={chrome.bandRadius} /></clipPath>
+                  <rect className="diagram-stage-progress" clipPath={`url(#band-clip-${band.stage})`} x={band.x} y={band.y + band.height - filledHeight} width={band.width} height={filledHeight} />
+                </>
+              )}
               <text className="diagram-stage-label" transform={`translate(${band.x + band.width / 2 + 3.5} ${band.y + band.height / 2}) rotate(-90)`}>{band.label}</text>
             </g>
-          ))}
+            );
+          })}
         </g>
         <g aria-hidden="true" className="diagram-connections">
           {connections.map((connection) => <path key={connection.id} d={connection.d} markerEnd="url(#arrowhead)" />)}
         </g>
         <g>
-          {nodes.map((node) => (
+          {nodes.map((node) => {
+            const pending = progress ? !nodeReady(node, progress.ready) : false;
+            return (
             <g
               key={node.id}
-              className={`diagram-node ${node.kind ?? ''} ${selected === node.field ? 'selected' : ''}`}
+              className={`diagram-node ${node.kind ?? ''} ${selected === node.field ? 'selected' : ''}${pending ? ' pending' : ''}`}
               role="button"
               tabIndex={0}
-              aria-label={`${node.lines.join('. ')}. Selecionar para editar detalhes.`}
+              aria-label={`${node.lines.join('. ')}.${pending ? ` ${progress!.pendingLabel}.` : ''} Selecionar para editar detalhes.`}
               onClick={() => onSelect(node.field, node.id)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
@@ -202,7 +231,8 @@ export function PrismaDiagram({ project, locale, selected, onSelect, onSelectSta
                 </text>
               ))}
             </g>
-          ))}
+            );
+          })}
         </g>
         <text x={chrome.creditX} y={chrome.height - 16} className="diagram-credit">{chrome.credit}</text>
       </svg>
