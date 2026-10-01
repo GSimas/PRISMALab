@@ -10,6 +10,10 @@ export interface TourStep {
   tab?: BuilderTab;
   /** Primi panel state required by this step. */
   assistant?: 'open' | 'closed';
+  /** Builder drawer view required by this step. */
+  inspector?: 'details' | 'validation' | 'closed';
+  /** A collapsed <details> to unfold before the target is looked up. */
+  open?: string;
 }
 
 export type TourStepId =
@@ -19,19 +23,19 @@ export type TourStepId =
 
 /** The journey: set up the project, fill the flow top to bottom, review, report, then Primi. */
 export const tourSteps: TourStep[] = [
-  { id: 'welcome', tab: 'data', assistant: 'closed' },
-  { id: 'project', target: '.project-setup', tab: 'data' },
-  { id: 'model', target: '#model-fieldset', tab: 'data' },
+  { id: 'welcome', tab: 'data', assistant: 'closed', inspector: 'closed' },
+  { id: 'project', target: '.project-setup', tab: 'data', open: '#section-setup' },
+  { id: 'model', target: '#model-fieldset', tab: 'data', open: '#section-setup' },
   { id: 'identification', target: '#section-identification', tab: 'data' },
   { id: 'removed', target: '#section-removed', tab: 'data' },
   { id: 'screening', target: '#section-screening', tab: 'data' },
   { id: 'eligibility', target: '#section-eligibility', tab: 'data' },
-  { id: 'reasons', target: '.reasons-editor', tab: 'data' },
+  { id: 'reasons', target: '#section-eligibility .reasons-editor', tab: 'data', open: '#section-eligibility' },
   { id: 'inclusion', target: '#section-sectionInclusion', tab: 'data' },
-  { id: 'diagram', target: '.diagram-panel', tab: 'data' },
-  { id: 'node', target: '.selected-node', tab: 'data' },
-  { id: 'validation', target: '.validation-panel', tab: 'data' },
-  { id: 'toolbar', target: '.builder-bar', tab: 'data' },
+  { id: 'diagram', target: '.diagram-panel', tab: 'data', inspector: 'closed' },
+  { id: 'node', target: '.selected-node', tab: 'data', inspector: 'details' },
+  { id: 'validation', target: '.validation-panel', tab: 'data', inspector: 'validation' },
+  { id: 'toolbar', target: '.builder-bar', tab: 'data', inspector: 'closed' },
   { id: 'checklist', target: '.checklist-module', tab: 'checklist' },
   { id: 'export', target: '.export-panel', tab: 'export' },
   { id: 'primi', target: '.assistant-fab', tab: 'data', assistant: 'closed' },

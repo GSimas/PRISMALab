@@ -64,6 +64,7 @@
 @keyframes ping { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--green) 50%, transparent); } 50% { box-shadow: 0 0 0 7px transparent; } }
 @keyframes line-scan { from { scale: 0 1; } }
 @keyframes slow-spin { to { rotate: 360deg; } }
+@keyframes drawer-in { from { opacity: 0; translate: 24px 0; } }
 @keyframes progress-celebrate { 0%, 100% { scale: 1; } 35% { scale: 1.16; } }
 
 /* ---------- Page transitions ---------- */
@@ -157,7 +158,7 @@
 
 .primary-button, .secondary-button, .danger-button, .header-primary, .header-scientata-link, .icon-button, .text-button,
 .card-actions button, .icon-tool, .canvas-tools button, .builder-menu-panel > :is(button, a), .builder-tabs button, .about-tabs button, .export-grid button,
-.mobile-menu > summary, .settings-menu > summary, .checklist-item .info-toggle, .reasons-editor > div button,
+.mobile-menu > summary, .settings-menu > summary, .checklist-item .info-toggle, .reason-row button, .field-info, .continue-button,
 .coffee-button, .assistant-fab, .desktop-nav a, .global-footer a, .brand-mark, .source-link, .extension-directory a, .prose-page a {
   transition:
     transform var(--motion-base) var(--ease-out), rotate var(--motion-slow) var(--ease-out), background-color var(--motion-base) var(--ease-out),
@@ -299,6 +300,9 @@ details:not(.mobile-menu, .settings-menu, .builder-menu)[open] > :not(summary) {
 @keyframes primi-twinkle { 0%, 100% { opacity: 1; scale: 1; } 50% { opacity: .45; scale: .7; } }
 .primi-eye { transform-box: fill-box; transform-origin: center; animation: primi-blink 4.5s ease-in-out infinite; }
 .primi-spark { transform-box: fill-box; transform-origin: center; animation: primi-twinkle 2.6s ease-in-out infinite; }
+
+/* The details/validation drawer slides in from the right. */
+.context-panel.inspector { animation: drawer-in var(--motion-slow) var(--ease-out); }
 
 /* The completeness ring pops and pings once when the whole diagram is filled in. */
 .builder-progress.celebrate .completeness-ring { animation: progress-celebrate var(--motion-shine) var(--ease-out), ping 1.2s var(--ease-out); }

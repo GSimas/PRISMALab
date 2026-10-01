@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
-import { ArrowRight, ChevronDown, Circle, CircleCheck, CircleDashed, Coffee, Compass, Ellipsis, FileCheck2, Focus, HelpCircle, Maximize2, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Redo2, Sparkles, Table2, Trash2, TriangleAlert, Undo2, Upload, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowRight, ChevronDown, Circle, CircleCheck, CircleDashed, Coffee, Compass, Ellipsis, FileCheck2, Focus, HelpCircle, Info, Maximize2, PanelLeftClose, PanelLeftOpen, Redo2, Settings2, Sparkles, SquareFunction, Table2, Trash2, TriangleAlert, Undo2, Upload, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { useApp } from '../../app/AppProviders';
 import { useProjectStore } from '../../app/store';
 import { usePresence } from '../../app/usePresence';
@@ -65,9 +65,15 @@ const stageIcons: Record<StageStatus, ReactNode> = {
 
 const optionalFields: CountKey[] = ['automationExcluded', 'removedOther'];
 
-type Side = 'data' | 'context';
-type Panels = Record<Side, boolean>;
+type Panels = { data: boolean };
 const PANELS_KEY = 'prisma-builder-panels';
+/** What the right-hand drawer shows; null when it is closed. */
+type InspectorView = 'details' | 'validation';
+/** Below this width the drawer overlays the canvas instead of taking a column. */
+const OVERLAY_QUERY = '(max-width: 1180px)';
+
+/** Form section that each stage band of the diagram leads to. */
+const bandSection: Record<DiagramStage, string> = { identification: 'identification', screening: 'screening', included: 'sectionInclusion' };
 
 // Multiplicative steps feel even at every scale: 82% → 103% → 128% → … → 400%.
 const MIN_ZOOM = 0.4;
@@ -83,8 +89,10 @@ export function BuilderWorkspace() {
   const [zoom, setZoom] = useState(0.82);
   const [saveState, setSaveState] = useState<'saving' | 'saved'>('saved');
   const [confirmClear, setConfirmClear] = useState(false);
-  // Which side panels are collapsed; a per-browser preference.
-  const [collapsed, setCollapsed] = useState<Panels>({ data: false, context: false });
+  // Whether the data panel is collapsed; a per-browser preference.
+  const [collapsed, setCollapsed] = useState<Panels>({ data: false });
+  const [inspector, setInspector] = useState<InspectorView | null>(null);
+  const inspectorTrigger = useRef<HTMLElement | null>(null);
   const clearModal = usePresence(confirmClear);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDetailsElement>(null);
@@ -108,17 +116,29 @@ export function BuilderWorkspace() {
     setCollapsed(next);
     localStorage.setItem(PANELS_KEY, JSON.stringify(next));
   };
-  const togglePanel = (side: Side) => setPanels({ ...collapsed, [side]: !collapsed[side] });
-  // The tour walks through both panels, so it always shows them.
+  const toggleDataPanel = () => setPanels({ data: !collapsed.data });
+  // The tour walks through the data panel, so it always shows it.
   const dataCollapsed = collapsed.data && !touring;
-  const contextCollapsed = collapsed.context && !touring;
+
+  /** Opens the drawer on a view; `focus` moves keyboard focus into it (explicit opens only). */
+  const openInspector = (view: InspectorView, focus = false) => {
+    if (tab !== 'data') flushSync(() => setTab('data'));
+    if (focus && document.activeElement instanceof HTMLElement) inspectorTrigger.current = document.activeElement;
+    flushSync(() => setInspector(view));
+    if (focus) document.getElementById('inspector-title')?.focus();
+  };
+  const closeInspector = () => {
+    setInspector(null);
+    const trigger = inspectorTrigger.current;
+    inspectorTrigger.current = null;
+    if (trigger?.isConnected) trigger.focus();
+  };
 
   const focusById = (id: string) => {
     const el = document.getElementById(id);
     if (!el) return;
-    // Expand a collapsed panel synchronously so the target can be scrolled to.
-    const side = el.closest<HTMLElement>('[data-panel]')?.dataset.panel as Side | undefined;
-    if (side && collapsed[side]) flushSync(() => setPanels({ ...collapsed, [side]: false }));
+    // Expand the collapsed data panel synchronously so the target can be scrolled to.
+    if (el.closest('[data-panel="data"]') && collapsed.data) flushSync(() => setPanels({ data: false }));
     const details = el.closest('details');
     if (details && !(details as HTMLDetailsElement).open) (details as HTMLDetailsElement).open = true;
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -143,12 +163,20 @@ export function BuilderWorkspace() {
   };
 
   const handleIssueClick = (item: ValidationIssue) => {
+    // An overlaying drawer would hide the field it points to.
+    if (window.matchMedia(OVERLAY_QUERY).matches) setInspector(null);
     if (item.location === 'project') { focusById('project-title-field'); return; }
     if (item.location === 'model') { focusById('model-fieldset'); return; }
     focusField(item.location);
   };
 
-  const focusStage = (stage: DiagramStage) => focusById(`section-${stage}`);
+  const focusStage = (stage: DiagramStage) => focusById(`section-${bandSection[stage]}`);
+
+  /** A click on a diagram box selects its field and shows its details. */
+  const selectNode = (field: CountKey, nodeId?: string) => {
+    focusField(field, nodeId);
+    openInspector('details');
+  };
 
   /** Jumps to a field from anywhere in the builder, switching back to the data tab first. */
   const goToField = (field: CountKey) => {
@@ -198,10 +226,7 @@ export function BuilderWorkspace() {
     focusById('model-fieldset');
   };
 
-  const openValidation = () => {
-    if (tab !== 'data') flushSync(() => setTab('data'));
-    focusById('validation-panel');
-  };
+  const openValidation = () => openInspector('validation', true);
 
   const toggleTable = () => {
     const details = tableRef.current;
@@ -215,6 +240,14 @@ export function BuilderWorkspace() {
   const nextLabel = completeness.next ? (completeness.next.field === 'websites' ? t('sectionOtherMethods') : labels[completeness.next.field]) : '';
   const allFilled = completeness.filled === completeness.total;
 
+  // When a project is opened, unfold the step that needs input next.
+  const nextSlug = fieldSections.find((section) => section.stage === completeness.next?.stage)?.slug;
+  useEffect(() => {
+    if (!nextSlug) return;
+    const open = window.setTimeout(() => document.getElementById(`section-${nextSlug}`)?.setAttribute('open', ''), 0);
+    return () => window.clearTimeout(open);
+  }, [project.id]); // eslint-disable-line react-hooks/exhaustive-deps -- only when another project is loaded
+
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('project') ?? localStorage.getItem('prisma-last-project');
     if (id) getProject(id).then((saved) => saved && setProject(saved));
@@ -224,7 +257,7 @@ export function BuilderWorkspace() {
     const load = window.setTimeout(() => {
       try {
         const saved = JSON.parse(localStorage.getItem(PANELS_KEY) ?? 'null') as Partial<Panels> | null;
-        if (saved) setCollapsed({ data: saved.data === true, context: saved.context === true });
+        if (saved) setCollapsed({ data: saved.data === true });
       } catch { /* ignore a malformed preference */ }
     }, 0);
     return () => window.clearTimeout(load);
@@ -243,6 +276,8 @@ export function BuilderWorkspace() {
   const prepareTourStep = (step: TourStep) => {
     if (step.tab) setTab(step.tab);
     if (step.assistant) setAssistantOpen(step.assistant === 'open');
+    if (step.inspector) setInspector(step.inspector === 'closed' ? null : step.inspector);
+    if (step.open) document.querySelector<HTMLDetailsElement>(step.open)?.setAttribute('open', '');
   };
 
   const closeTour = (completed: boolean) => {
@@ -362,7 +397,7 @@ export function BuilderWorkspace() {
     return (
       <div id={blockId} className="database-sources-block other-sources-block">
         <div className="database-sources-header">
-          <h4>{t('otherMethodsSources')}</h4>
+          <h3>{t('otherMethodsSources')}</h3>
           {otherSourcesList.length > 0 && (
             <span className="database-count-badge">
               {t('totalFromOtherSources')}: {totalOther}
@@ -440,14 +475,53 @@ export function BuilderWorkspace() {
           </div>
         )}
 
-        <button
-          className="text-button add-database-btn"
-          type="button"
-          onClick={() => addOtherSource('other', '')}
-        >
-          + {t('addOtherSource')}
-        </button>
       </div>
+    );
+  };
+
+  const visibleSections = fieldSections.filter((section) => section.fields.some(applicable));
+  const sectionAfter = (slug: string) => {
+    if (slug === 'setup') return visibleSections[0];
+    const index = visibleSections.findIndex((section) => section.slug === slug);
+    return visibleSections[index + 1];
+  };
+
+  /** "Continue: <next step>" once a step is done; opening the next one closes this one. */
+  const renderContinue = (slug: string) => {
+    const next = sectionAfter(slug);
+    if (!next) return null;
+    return (
+      <button type="button" className="continue-button" onClick={() => focusById(`section-${next.slug}`)}>
+        {t('continueTo')}: {t(next.titleKey)} <ArrowRight size={13} aria-hidden="true" />
+      </button>
+    );
+  };
+
+  const renderReasons = (key: 'exclusionReasons' | 'otherExclusionReasons', totalField: CountKey, titleKey: TranslationKey) => {
+    const reasons = project[key];
+    const sum = reasons.reduce((acc, reason) => acc + reason.count, 0);
+    const total = calculated.values[totalField] ?? 0;
+    const matches = sum === total;
+    const patchReasons = (next: typeof reasons) => patchProject({ [key]: next });
+    return (
+      <section className="reasons-editor" aria-labelledby={`${key}-title`}>
+        <div className="reasons-header">
+          <h3 id={`${key}-title`}>{t(titleKey)}</h3>
+          {reasons.length > 0 && (
+            <span className={`reasons-sum${matches ? ' ok' : ' off'}`} title={t('reasonsSum')} aria-label={`${t('reasonsSum')}: ${sum} / ${total}`}>
+              Σ {sum} / {total} {matches ? <CircleCheck size={13} aria-hidden="true" /> : <TriangleAlert size={13} aria-hidden="true" />}
+            </span>
+          )}
+        </div>
+        {reasons.map((reason) => (
+          <div className="reason-row" key={reason.id}>
+            <input aria-label={t('reason')} placeholder={t('reason')} value={reason.label} onChange={(event) => patchReasons(reasons.map((item) => item.id === reason.id ? { ...item, label: event.target.value } : item))} />
+            <input aria-label={t('count')} type="number" min="0" value={reason.count} onChange={(event) => patchReasons(reasons.map((item) => item.id === reason.id ? { ...item, count: Number(event.target.value) } : item))} />
+            <button type="button" aria-label={t('removeReason')} title={t('removeReason')} onClick={() => patchReasons(reasons.filter((item) => item.id !== reason.id))}>×</button>
+          </div>
+        ))}
+        <button className="text-button" type="button" onClick={() => patchReasons([...reasons, { id: crypto.randomUUID(), label: '', count: 0 }])}>+ {t('addReason')}</button>
+      </section>
     );
   };
 
@@ -495,7 +569,7 @@ export function BuilderWorkspace() {
                 ) : completeness.complete ? (
                   <button type="button" className="progress-action" disabled={!ready} onClick={() => setTab('export')}>{t('export')} <ArrowRight size={13} aria-hidden="true" /></button>
                 ) : (
-                  <button type="button" className="progress-action" disabled={!ready} onClick={reviewFirstAlert}>{t('validation')} <ArrowRight size={13} aria-hidden="true" /></button>
+                  <button type="button" className="progress-action" disabled={!ready} onClick={() => { reviewFirstAlert(); openInspector('validation'); }}>{t('validation')} <ArrowRight size={13} aria-hidden="true" /></button>
                 )}
               </div>
               <div className="sr-only" role="status" aria-live="polite">{progressMessage}</div>
@@ -527,30 +601,41 @@ export function BuilderWorkspace() {
       {tab === 'import' && <div className="single-module"><ImportWizard onImport={(next) => { setProject(next); setTab('data'); }} /></div>}
 
       {tab === 'data' && (
-        <div className={`builder-workspace${dataCollapsed ? ' data-collapsed' : ''}${contextCollapsed ? ' context-collapsed' : ''}`} ref={workspaceRef}>
+        <div className={`builder-workspace${dataCollapsed ? ' data-collapsed' : ''}${inspector ? ' inspector-open' : ''}`} ref={workspaceRef}>
           <aside className="data-panel" data-panel="data" data-collapsed={dataCollapsed || undefined} aria-label="Preenchimento do diagrama">
-            <button type="button" className="panel-toggle" aria-expanded={!dataCollapsed} aria-label={`${dataCollapsed ? t('expandPanel') : t('collapsePanel')}: ${t('data')}`} title={dataCollapsed ? t('expandPanel') : t('collapsePanel')} onClick={() => togglePanel('data')}>
+            <button type="button" className="panel-toggle" aria-expanded={!dataCollapsed} aria-label={`${dataCollapsed ? t('expandPanel') : t('collapsePanel')}: ${t('data')}`} title={dataCollapsed ? t('expandPanel') : t('collapsePanel')} onClick={toggleDataPanel}>
               {dataCollapsed ? <PanelLeftOpen size={16} aria-hidden="true" /> : <PanelLeftClose size={16} aria-hidden="true" />}
               <span>{t('data')}</span>
             </button>
-            <section className="project-setup">
-              <h2>{t('projectSetup')}</h2>
-              <label>{t('authors')}<input value={project.authors.join('; ')} onChange={(event) => patchProject({ authors: event.target.value.split(';').map((value) => value.trim()).filter(Boolean) })} placeholder={t('authorsPlaceholder')} /></label>
-              <label>{t('institution')}<input value={project.institution} onChange={(event) => patchProject({ institution: event.target.value })} /></label>
-              <label>{t('protocol')}<input type="url" value={project.protocolUrl} onChange={(event) => patchProject({ protocolUrl: event.target.value })} /></label>
-              <fieldset id="model-fieldset"><legend>{t('flowType')}</legend>
-                <label className="check-row"><input type="radio" name="review-kind" checked={project.reviewKind === 'new'} onChange={() => setReviewKind('new')} /> {t('newReview')}</label>
-                <label className="check-row"><input type="radio" name="review-kind" checked={project.reviewKind === 'updated'} onChange={() => setReviewKind('updated')} /> {t('updatedReview')}</label>
-                <label className="check-row"><input type="checkbox" checked={hasOtherSources(project.model)} onChange={(event) => setOtherSources(event.target.checked)} /> {t('otherSources')}</label>
-              </fieldset>
-            </section>
-            {fieldSections.map((section) => {
+            <h2 className="sr-only">{t('data')}</h2>
+            {/* One step open at a time (exclusive accordion via the shared name). */}
+            <details className="form-section setup-section" id="section-setup" name="builder-steps">
+              <summary>
+                <span className="stage-status"><Settings2 size={15} aria-hidden="true" /></span>
+                <span className="stage-title">{t('projectSetup')}</span>
+              </summary>
+              <div className="project-setup">
+                <fieldset id="model-fieldset"><legend>{t('flowType')}</legend>
+                  <label className="check-row"><input type="radio" name="review-kind" checked={project.reviewKind === 'new'} onChange={() => setReviewKind('new')} /> {t('newReview')}</label>
+                  <label className="check-row"><input type="radio" name="review-kind" checked={project.reviewKind === 'updated'} onChange={() => setReviewKind('updated')} /> {t('updatedReview')}</label>
+                  <label className="check-row"><input type="checkbox" checked={hasOtherSources(project.model)} onChange={(event) => setOtherSources(event.target.checked)} /> {t('otherSources')}</label>
+                </fieldset>
+                <details className="project-details">
+                  <summary>{t('projectDetails')}</summary>
+                  <div>
+                    <label>{t('authors')}<input value={project.authors.join('; ')} onChange={(event) => patchProject({ authors: event.target.value.split(';').map((value) => value.trim()).filter(Boolean) })} placeholder={t('authorsPlaceholder')} /></label>
+                    <label>{t('institution')}<input value={project.institution} onChange={(event) => patchProject({ institution: event.target.value })} /></label>
+                    <label>{t('protocol')}<input type="url" value={project.protocolUrl} onChange={(event) => patchProject({ protocolUrl: event.target.value })} /></label>
+                  </div>
+                </details>
+                {renderContinue('setup')}
+              </div>
+            </details>
+            {visibleSections.map((section) => {
               const fields = section.fields.filter(applicable);
-              if (!fields.length && section.slug !== 'other-methods') return null;
-              if (!fields.length && section.slug === 'other-methods' && !hasOtherSources(project.model)) return null;
               const stage = completeness.stages.find((item) => item.id === section.stage);
               return (
-                <details className="form-section" id={`section-${section.slug}`} key={section.slug} data-status={stage?.status} open={section.slug === 'identification' || section.slug === 'other-methods'}>
+                <details className="form-section" id={`section-${section.slug}`} key={section.slug} name="builder-steps" data-status={stage?.status} open={section.slug === 'identification'}>
                   <summary>
                     {stage && <span className="stage-status">{stageIcons[stage.status]}</span>}
                     <span className="stage-title">{t(section.titleKey)}{stage && <span className="sr-only"> ({t(stageStatusKey[stage.status])})</span>}</span>
@@ -563,9 +648,9 @@ export function BuilderWorkspace() {
                       const fieldIssues = issues.filter((item) => item.location === field);
                       const optional = optionalFields.includes(field);
                       return (
-                        <div key={field} style={{ display: 'grid', gap: '.4rem' }}>
+                        <div key={field} className="count-row">
                           <label className={`count-field ${origin}`} id={`field-${field}`}>
-                            <span>{labels[field]}<small>{origin === 'derived' ? t('derived') : origin === 'override' ? t('override') : t('informed')}{optional ? ` · ${t('optional')}` : ''}</small></span>
+                            <span>{labels[field]}<small>{origin === 'derived' && <SquareFunction size={11} aria-hidden="true" />}{t(originKey[origin])}{optional ? ` · ${t('optional')}` : ''}</small></span>
                             <input
                               type="number" min="0" step="1" inputMode="numeric" value={calculated.values[field] ?? ''}
                               disabled={origin === 'derived'} aria-invalid={fieldIssues.some((item) => item.status === 'inconsistency' || item.status === 'missing')}
@@ -577,10 +662,13 @@ export function BuilderWorkspace() {
                             {calculated.formulas[field] && <small className="formula">{calculated.formulas[field]}</small>}
                             {fieldIssues[0] && <small className="field-error">{fieldIssues[0].title}</small>}
                           </label>
+                          <button type="button" className="field-info" aria-label={`${t('fieldDetails')}: ${labels[field]}`} title={t('fieldDetails')} onClick={() => { setSelected(field); openInspector('details', true); }}>
+                            <Info size={14} aria-hidden="true" />
+                          </button>
                           {field === 'databases' && (
                             <div className="database-sources-block">
                               <div className="database-sources-header">
-                                <h4>{t('specificDatabases')}</h4>
+                                <h3>{t('specificDatabases')}</h3>
                                 {databaseSources.length > 0 && (
                                   <span className="database-count-badge">
                                     {t('totalFromDatabases')}: {databaseSources.reduce((acc, s) => acc + (s.count || 0), 0)}
@@ -588,22 +676,18 @@ export function BuilderWorkspace() {
                                 )}
                               </div>
 
-                              <div className="database-chips-container">
-                                <span className="chips-label">{t('quickSuggestions')}</span>
-                                <div className="database-chips">
-                                  {popularDatabases.map((dbName) => (
-                                    <button
-                                      key={dbName}
-                                      type="button"
-                                      className="database-chip"
-                                      onClick={() => addDatabaseSource(dbName)}
-                                      title={`+ ${dbName}`}
-                                    >
-                                      + {dbName}
-                                    </button>
-                                  ))}
+                              {databaseSources.length === 0 && (
+                                <div className="database-chips-container">
+                                  <span className="chips-label">{t('quickSuggestions')}</span>
+                                  <div className="database-chips">
+                                    {popularDatabases.map((dbName) => (
+                                      <button key={dbName} type="button" className="database-chip" onClick={() => addDatabaseSource(dbName)} title={`+ ${dbName}`}>
+                                        + {dbName}
+                                      </button>
+                                    ))}
+                                  </div>
                                 </div>
-                              </div>
+                              )}
 
                               {databaseSources.length > 0 && (
                                 <div className="database-items-list">
@@ -623,13 +707,7 @@ export function BuilderWorkspace() {
                                         value={source.count === 0 ? '' : source.count}
                                         onChange={(event) => updateDatabaseSource(source.id, { count: event.target.value === '' ? 0 : Math.max(0, Number(event.target.value)) })}
                                       />
-                                      <button
-                                        type="button"
-                                        className="remove-btn"
-                                        aria-label={t('removeDatabase')}
-                                        title={t('removeDatabase')}
-                                        onClick={() => removeDatabaseSource(source.id)}
-                                      >
+                                      <button type="button" className="remove-btn" aria-label={t('removeDatabase')} title={t('removeDatabase')} onClick={() => removeDatabaseSource(source.id)}>
                                         ×
                                       </button>
                                     </div>
@@ -637,46 +715,34 @@ export function BuilderWorkspace() {
                                 </div>
                               )}
 
-                              <button
-                                className="text-button add-database-btn"
-                                type="button"
-                                onClick={() => addDatabaseSource('')}
+                              {/* Suggestions stay one keystroke away through the datalist once the list has items. */}
+                              <form
+                                className="add-source-row"
+                                onSubmit={(event) => {
+                                  event.preventDefault();
+                                  const input = event.currentTarget.elements.namedItem('database') as HTMLInputElement;
+                                  addDatabaseSource(input.value.trim());
+                                  input.value = '';
+                                }}
                               >
-                                + {t('addDatabase')}
-                              </button>
+                                <input name="database" list="database-suggestions" aria-label={t('addDatabase')} placeholder={t('addDatabase')} />
+                                <button type="submit" className="text-button">+ {t('add')}</button>
+                                <datalist id="database-suggestions">
+                                  {popularDatabases.filter((name) => !databaseSources.some((source) => source.name === name)).map((name) => <option key={name} value={name} />)}
+                                </datalist>
+                              </form>
                             </div>
                           )}
                         </div>
                       );
                     })}
+                    {section.slug === 'eligibility' && renderReasons('exclusionReasons', 'reportsExcluded', 'exclusionReasons')}
+                    {section.slug === 'other-methods' && renderReasons('otherExclusionReasons', 'otherReportsExcluded', 'exclusionReasonsOther')}
+                    {stage?.status === 'complete' && renderContinue(section.slug)}
                   </div>
                 </details>
               );
             })}
-            <section className="reasons-editor">
-              <h2>{t('exclusionReasons')}</h2>
-              {project.exclusionReasons.map((reason) => (
-                <div key={reason.id}>
-                  <input aria-label={t('reason')} placeholder={t('reason')} value={reason.label} onChange={(event) => patchProject({ exclusionReasons: project.exclusionReasons.map((item) => item.id === reason.id ? { ...item, label: event.target.value } : item) })} />
-                  <input aria-label={t('count')} type="number" min="0" value={reason.count} onChange={(event) => patchProject({ exclusionReasons: project.exclusionReasons.map((item) => item.id === reason.id ? { ...item, count: Number(event.target.value) } : item) })} />
-                  <button type="button" aria-label={t('removeReason')} title={t('removeReason')} onClick={() => patchProject({ exclusionReasons: project.exclusionReasons.filter((item) => item.id !== reason.id) })}>×</button>
-                </div>
-              ))}
-              <button className="text-button" type="button" onClick={() => patchProject({ exclusionReasons: [...project.exclusionReasons, { id: crypto.randomUUID(), label: '', count: 0 }] })}>+ {t('addReason')}</button>
-            </section>
-            {hasOtherSources(project.model) && (
-              <section className="reasons-editor">
-                <h2>{t('exclusionReasonsOther')}</h2>
-                {project.otherExclusionReasons.map((reason) => (
-                  <div key={reason.id}>
-                    <input aria-label={t('reason')} placeholder={t('reason')} value={reason.label} onChange={(event) => patchProject({ otherExclusionReasons: project.otherExclusionReasons.map((item) => item.id === reason.id ? { ...item, label: event.target.value } : item) })} />
-                    <input aria-label={t('count')} type="number" min="0" value={reason.count} onChange={(event) => patchProject({ otherExclusionReasons: project.otherExclusionReasons.map((item) => item.id === reason.id ? { ...item, count: Number(event.target.value) } : item) })} />
-                    <button type="button" aria-label={t('removeReason')} title={t('removeReason')} onClick={() => patchProject({ otherExclusionReasons: project.otherExclusionReasons.filter((item) => item.id !== reason.id) })}>×</button>
-                  </div>
-                ))}
-                <button className="text-button" type="button" onClick={() => patchProject({ otherExclusionReasons: [...project.otherExclusionReasons, { id: crypto.randomUUID(), label: '', count: 0 }] })}>+ {t('addReason')}</button>
-              </section>
-            )}
           </aside>
 
           <section className="diagram-panel" aria-label="Editor visual do diagrama">
@@ -692,7 +758,7 @@ export function BuilderWorkspace() {
                 ))}
               </div>
             </fieldset>
-            <PrismaDiagram project={project} locale={locale} selected={selected} onSelect={focusField} onSelectStage={focusStage} progress={{ ready: completeness.ready, bands: bandProgress(completeness), pendingLabel: t('pendingNode'), completeLabel: t('stageStatusComplete') }} zoom={zoom} onZoom={(update) => setZoom((value) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, update(value))))} />
+            <PrismaDiagram project={project} locale={locale} selected={selected} onSelect={selectNode} onSelectStage={focusStage} progress={{ ready: completeness.ready, bands: bandProgress(completeness), pendingLabel: t('pendingNode'), completeLabel: t('stageStatusComplete') }} zoom={zoom} onZoom={(update) => setZoom((value) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, update(value))))} />
             <div className="canvas-tools" role="toolbar" aria-label={t('zoomLevel')}>
               <button type="button" onClick={() => setZoom((value) => Math.max(MIN_ZOOM, value / ZOOM_STEP))} disabled={zoom <= MIN_ZOOM} title={t('zoomOut')} aria-label={t('zoomOut')}><ZoomOut size={16} aria-hidden="true" /></button>
               <output aria-label={t('zoomLevel')}>{Math.round(zoom * 100)}%</output>
@@ -708,14 +774,22 @@ export function BuilderWorkspace() {
             </details>
           </section>
 
-          <aside className="context-panel" data-panel="context" data-collapsed={contextCollapsed || undefined} aria-label="Detalhes e validação">
-            <button type="button" className="panel-toggle" aria-expanded={!contextCollapsed} aria-label={`${contextCollapsed ? t('expandPanel') : t('collapsePanel')}: ${t('validation')}`} title={contextCollapsed ? t('expandPanel') : t('collapsePanel')} onClick={() => togglePanel('context')}>
-              {contextCollapsed ? <PanelRightOpen size={16} aria-hidden="true" /> : <PanelRightClose size={16} aria-hidden="true" />}
-              <span>{t('validation')}</span>
-              <b className="issue-count">{issues.filter((item) => item.status !== 'valid').length}</b>
-            </button>
+          {inspector && (
+            <aside
+              className="context-panel inspector"
+              aria-label={inspector === 'details' ? t('details') : t('validation')}
+              onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); closeInspector(); } }}
+            >
+              <div className="inspector-header">
+                <div className="inspector-switch" role="group" aria-label={`${t('details')} / ${t('validation')}`}>
+                  <button type="button" aria-pressed={inspector === 'details'} onClick={() => setInspector('details')}>{t('details')}</button>
+                  <button type="button" aria-pressed={inspector === 'validation'} onClick={() => setInspector('validation')}>{t('validation')} <b className="issue-count">{alertCount}</b></button>
+                </div>
+                <button type="button" className="icon-tool" aria-label={t('closePanel')} title={t('closePanel')} onClick={closeInspector}><X size={17} aria-hidden="true" /></button>
+              </div>
+              {inspector === 'details' ? (
             <section className="selected-node">
-              <p className="kicker">{t('selectedNode')}</p><h2>{labels[selected]}</h2>
+              <p className="kicker">{t('selectedNode')}</p><h2 id="inspector-title" tabIndex={-1}>{labels[selected]}</h2>
               <p>{definitions[selected] ?? t('defaultDefinition')}</p>
               <dl><div><dt>{t('value')}</dt><dd>{calculated.values[selected] ?? '—'}</dd></div><div><dt>{t('origin')}</dt><dd>{t(originKey[calculated.origins[selected]])}</dd></div><div><dt>{t('formula')}</dt><dd>{calculated.formulas[selected] ?? t('directValue')}</dd></div></dl>
               {(selectedOrigin === 'derived' || selectedOrigin === 'override') && (
@@ -732,23 +806,21 @@ export function BuilderWorkspace() {
                 <label>{t('repositoryOrFile')}<input value={selectedProvenance.repositoryRef} onChange={(event) => patchProvenance({ repositoryRef: event.target.value })} /></label>
               </details>
             </section>
+              ) : (
             <section className="validation-panel" id="validation-panel">
-              <div className="panel-heading"><div><p className="kicker">{t('ruleEngine')}</p><h2>{t('validation')}</h2></div><span className="issue-count">{issues.filter((item) => item.status !== 'valid').length}</span></div>
+              <div className="panel-heading"><div><p className="kicker">{t('ruleEngine')}</p><h2 id="inspector-title" tabIndex={-1}>{t('validation')}</h2></div><span className="issue-count">{alertCount}</span></div>
               <div role="status" aria-live="polite" className="sr-only">{issues.length} {t('validationResults')}</div>
               {issues.map((item) => (
-                <article
-                  className={`validation-item ${item.status}`}
-                  key={item.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleIssueClick(item)}
-                  onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleIssueClick(item); } }}
-                >
-                  <span>{t(issueStatusKey[item.status])}</span><h3>{item.title}</h3><p>{item.why}</p><small>{item.how}</small>
+                <article className={`validation-item ${item.status}`} key={item.id}>
+                  <span>{t(issueStatusKey[item.status])}</span>
+                  <h3><button type="button" className="validation-link" onClick={() => handleIssueClick(item)}>{item.title}</button></h3>
+                  <p>{item.why}</p><small>{item.how}</small>
                 </article>
               ))}
             </section>
-          </aside>
+              )}
+            </aside>
+          )}
         </div>
       )}
 

@@ -275,6 +275,12 @@ const en = {
   statusInconsistency: 'Inconsistency',
   statusMissing: 'Missing',
   noAlerts: 'No alerts',
+  projectDetails: 'Project details',
+  continueTo: 'Continue',
+  closePanel: 'Close panel',
+  fieldDetails: 'Field details',
+  reasonsSum: 'Sum of reasons',
+  add: 'Add',
 };
 
 export type TranslationKey = keyof typeof en;
@@ -545,6 +551,12 @@ const pt: Record<TranslationKey, string> = {
   statusInconsistency: 'Inconsistência',
   statusMissing: 'Ausente',
   noAlerts: 'Sem alertas',
+  projectDetails: 'Detalhes do projeto',
+  continueTo: 'Continuar',
+  closePanel: 'Fechar painel',
+  fieldDetails: 'Detalhes do campo',
+  reasonsSum: 'Soma dos motivos',
+  add: 'Adicionar',
 };
 
 const it: Record<TranslationKey, string> = {
@@ -792,6 +804,12 @@ const it: Record<TranslationKey, string> = {
   statusInconsistency: 'Incoerenza',
   statusMissing: 'Mancante',
   noAlerts: 'Nessun avviso',
+  projectDetails: 'Dettagli del progetto',
+  continueTo: 'Continua',
+  closePanel: 'Chiudi pannello',
+  fieldDetails: 'Dettagli del campo',
+  reasonsSum: 'Somma dei motivi',
+  add: 'Aggiungi',
 };
 
 const fr: Record<TranslationKey, string> = {
@@ -1039,6 +1057,12 @@ const fr: Record<TranslationKey, string> = {
   statusInconsistency: 'Incohérence',
   statusMissing: 'Manquant',
   noAlerts: 'Aucune alerte',
+  projectDetails: 'Détails du projet',
+  continueTo: 'Continuer',
+  closePanel: 'Fermer le panneau',
+  fieldDetails: 'Détails du champ',
+  reasonsSum: 'Somme des motifs',
+  add: 'Ajouter',
 };
 
 const de: Record<TranslationKey, string> = {
@@ -1286,6 +1310,12 @@ const de: Record<TranslationKey, string> = {
   statusInconsistency: 'Inkonsistenz',
   statusMissing: 'Fehlt',
   noAlerts: 'Keine Hinweise',
+  projectDetails: 'Projektdetails',
+  continueTo: 'Weiter',
+  closePanel: 'Bereich schließen',
+  fieldDetails: 'Felddetails',
+  reasonsSum: 'Summe der Gründe',
+  add: 'Hinzufügen',
 };
 
 const zh: Record<TranslationKey, string> = {
@@ -1533,6 +1563,12 @@ const zh: Record<TranslationKey, string> = {
   statusInconsistency: '不一致',
   statusMissing: '缺失',
   noAlerts: '无提示',
+  projectDetails: '项目详情',
+  continueTo: '继续',
+  closePanel: '关闭面板',
+  fieldDetails: '字段详情',
+  reasonsSum: '原因合计',
+  add: '添加',
 };
 
 export const translations: Record<Locale, Record<TranslationKey, string>> = {

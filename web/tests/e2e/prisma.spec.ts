@@ -6,24 +6,33 @@ test('cria os quatro modelos, valida inconsistência e persiste o projeto', asyn
   await page.addInitScript(() => localStorage.setItem('prisma-locale', 'pt-BR'));
   await page.goto('/builder');
   await expect(page.locator('main[data-app-ready="true"]')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Validação' })).toBeVisible();
-  const databases = page.getByLabel('Registros identificados em bases');
-  const duplicates = page.getByLabel('Duplicatas removidas');
+  await expect(page.getByRole('button', { name: /^Validação:/ })).toBeVisible();
+  const databases = page.getByLabel(/^Registros identificados em bases/);
+  const duplicates = page.getByLabel(/^Duplicatas removidas/);
   await databases.fill('10');
   await page.locator('summary').filter({ hasText: 'Removidos antes da triagem' }).click();
   await duplicates.fill('99');
+  // Validation lives in a drawer opened from the alerts chip.
+  await page.getByRole('button', { name: /^Validação:/ }).click();
   await expect(page.getByText('Uma subtração do fluxo produz valor negativo')).toBeVisible();
+  await page.getByRole('button', { name: 'Fechar painel' }).click();
   await duplicates.fill('2');
+  await page.getByRole('button', { name: /^Validação:/ }).click();
   await expect(page.getByText('Uma subtração do fluxo produz valor negativo')).toBeHidden();
+  await page.getByRole('button', { name: 'Fechar painel' }).click();
+  await page.locator('summary').filter({ hasText: 'Identificação' }).click();
   // Per-database sources replace the direct count, which becomes their sum.
   await page.getByRole('button', { name: '+ Scopus' }).click();
   await page.locator('.database-item-row').getByLabel('Contagem').fill('12');
   await expect(databases).toHaveValue('12');
   await expect(databases).toBeDisabled();
+  await page.locator('summary').filter({ hasText: 'Configuração do projeto' }).click();
   await page.getByLabel('Revisão atualizada').check();
   await page.locator('summary').filter({ hasText: 'Estudos anteriores' }).click();
-  await expect(page.getByLabel('Estudos incluídos na versão anterior')).toBeVisible();
+  await expect(page.getByLabel(/^Estudos incluídos na versão anterior/)).toBeVisible();
+  await page.locator('summary').filter({ hasText: 'Configuração do projeto' }).click();
   await page.getByLabel('Utiliza outras fontes').check();
+  await page.locator('summary').filter({ hasText: 'Outros métodos' }).click();
   // Other methods are entered as a source list (sites, organisations, citations…).
   await expect(page.getByRole('heading', { name: 'Outros métodos (Sites, Organizações, Citações...)' })).toBeVisible();
   await expect(page.getByText('Salvo localmente')).toBeVisible({ timeout: 5000 });

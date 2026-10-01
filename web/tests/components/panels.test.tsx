@@ -15,10 +15,19 @@ describe('painéis laterais do construtor', () => {
     fireEvent.click(screen.getByLabelText('Recolher painel: Dados'));
     expect(dataPanel()).toHaveAttribute('data-collapsed');
     expect(screen.getByLabelText('Expandir painel: Dados')).toHaveAttribute('aria-expanded', 'false');
-    expect(JSON.parse(localStorage.getItem('prisma-builder-panels')!)).toEqual({ data: true, context: false });
+    expect(JSON.parse(localStorage.getItem('prisma-builder-panels')!)).toEqual({ data: true });
+
+    // The validation list opens on demand in the drawer.
+    expect(container.querySelector('.validation-panel')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /^Validação:/ }));
+    expect(container.querySelector('.validation-panel')).toBeInTheDocument();
 
     // A validation item points into the collapsed data panel: it must reopen.
-    fireEvent.click(container.querySelector('.validation-item')!);
+    fireEvent.click(container.querySelector('.validation-link')!);
     expect(dataPanel()).not.toHaveAttribute('data-collapsed');
+
+    // Escape closes the drawer.
+    fireEvent.keyDown(container.querySelector('.inspector')!, { key: 'Escape' });
+    expect(container.querySelector('.inspector')).toBeNull();
   });
 });
