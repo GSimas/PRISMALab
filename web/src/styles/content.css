@@ -104,3 +104,14 @@
   .dashboard-controls { grid-template-columns: 1fr; }
   .topic-card dl div, .source-list li { grid-template-columns: 1fr; gap: .25rem; }
 }
+
+/* Highlights at the top of the About tab (formerly on the home page). */
+.about-highlights { margin-bottom: 2rem; }
+.prose-page .about-highlights h2 { margin: .5rem 0 .8rem; font-size: clamp(2rem, 3.4vw, 3rem); line-height: 1; letter-spacing: -.05em; }
+.prose-page .about-highlights p:last-child { margin: 0; }
+.prose-page .feature-grid { grid-template-columns: repeat(2, 1fr); margin-bottom: 2rem; }
+.prose-page .feature-grid article { min-height: 220px; padding: 1.8rem; }
+.prose-page .feature-grid h3 { margin: 2rem 0 .6rem; }
+.prose-page .independence-note { margin: 0 0 2.5rem; }
+.prose-page .independence-note h2 { margin: 0 0 .4rem; font-size: 1.5rem; }
+@media (max-width: 620px) { .prose-page .feature-grid { grid-template-columns: 1fr; } }

@@ -112,7 +112,7 @@
 
 /* Blocks further down the page reveal as they scroll in (progressive enhancement). */
 @supports (animation-timeline: view()) {
-  .home-intro > *, .feature-grid article, .independence-note, .topic-card, .definition-pair article, .extension-directory article {
+  .about-highlights > *, .feature-grid article, .independence-note, .topic-card, .definition-pair article, .extension-directory article {
     animation: rise-in linear both;
     animation-timeline: view();
     animation-range: entry 0% entry 60%;

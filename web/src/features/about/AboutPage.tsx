@@ -1,14 +1,17 @@
 'use client';
 
+import { Database, FileDown, Languages, Network, ScanSearch, ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { useApp } from '../../app/AppProviders';
 import { withViewTransition } from '../../app/motion';
 import type { TranslationKey } from '../../i18n/translations';
-import { aboutContent, accessibilityContent, licenseContent, methodologyContent, privacyContent, sourceLinks, sourcesContent } from './content';
+import { aboutContent, aboutHighlights, accessibilityContent, licenseContent, methodologyContent, privacyContent, sourceLinks, sourcesContent } from './content';
 
 export const aboutTabs = ['about', 'methodology', 'privacy', 'accessibility', 'sources', 'license'] as const satisfies readonly TranslationKey[];
 export type AboutTab = (typeof aboutTabs)[number];
+
+const featureIcons = [Network, ShieldCheck, FileDown, Languages, ScanSearch, Database];
 
 const isAboutTab = (value: string | null): value is AboutTab => aboutTabs.includes(value as AboutTab);
 
@@ -81,10 +84,36 @@ function renderTab(tab: AboutTab, locale: keyof typeof aboutContent): { eyebrow:
   switch (tab) {
     case 'about': {
       const text = aboutContent[locale] || aboutContent['pt-BR'];
+      const highlights = aboutHighlights[locale] || aboutHighlights['pt-BR'];
       return {
         ...text,
         body: (
           <>
+            <section className="about-highlights" aria-labelledby="about-highlights-title">
+              <p className="kicker">{highlights.kicker}</p>
+              <h2 id="about-highlights-title">{highlights.section}</h2>
+              <p>{highlights.sectionLead}</p>
+            </section>
+            <section className="feature-grid">
+              {highlights.features.map((feature, index) => {
+                const Icon = featureIcons[index] || Network;
+                return (
+                  <article key={feature.title}>
+                    <Icon aria-hidden="true" />
+                    <span>0{index + 1}</span>
+                    <h3>{feature.title}</h3>
+                    <p>{feature.description}</p>
+                  </article>
+                );
+              })}
+            </section>
+            <section className="independence-note">
+              <ShieldCheck size={26} aria-hidden="true" />
+              <div>
+                <h2>{highlights.independenceTitle}</h2>
+                <p>{highlights.independenceBody}</p>
+              </div>
+            </section>
             <h2>{text.purposeTitle}</h2>
             <p>{text.purposeBody}</p>
             <h2>{text.principlesTitle}</h2>
