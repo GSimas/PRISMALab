@@ -95,9 +95,29 @@ img, svg { max-width: 100%; }
 .mobile-menu > summary, .settings-menu > summary { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--line-strong); border-radius: 50%; background: transparent; list-style: none; cursor: pointer; }
 .mobile-menu > summary::-webkit-details-marker, .settings-menu > summary::-webkit-details-marker { display: none; }
 .settings-panel { position: absolute; z-index: 15; top: calc(100% + .6rem); right: 0; display: grid; gap: .9rem; width: min(320px, calc(100vw - 1.5rem)); padding: 1.1rem; border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(14px); box-shadow: var(--shadow); }
-.settings-panel select { min-height: 40px; padding: 0 .6rem; font: .8rem var(--font-mono); }
-.settings-a11y { display: grid; gap: .8rem; margin: 0; padding: .9rem 0 0; border: 0; border-top: 1px solid var(--line); }
-.settings-a11y legend { float: left; width: 100%; padding: 0; color: var(--ink); }
+/* Settings choices: native radios shown as a button grid (arrow keys, screen readers). */
+.settings-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.settings-choices.locale-choices { grid-template-columns: 1fr 1fr; }
+.settings-choices legend { float: left; grid-column: 1 / -1; width: 100%; margin-bottom: .4rem; padding: 0; }
+.settings-choices label {
+  position: relative; display: flex; align-items: center; justify-content: center; gap: .4rem; min-height: 36px; padding: 0 .5rem; border: 1px solid var(--line-strong); border-radius: var(--radius);
+  color: var(--muted); font: 500 .66rem var(--font-mono); letter-spacing: .02em; text-align: center; cursor: pointer; transition: color var(--motion-base, .2s), background var(--motion-base, .2s), border-color var(--motion-base, .2s);
+}
+.settings-choices label:has(input:checked) { border-color: var(--signal); background: var(--signal); color: #07110f; }
+.settings-choices label:not(:has(input:checked)):hover { border-color: var(--accent); color: var(--accent); }
+.settings-choices label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.settings-choices:disabled label { cursor: not-allowed; opacity: .45; }
+.settings-choices input { position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; opacity: 0; }
+.settings-a11y { position: relative; display: grid; gap: .8rem; margin: 0; padding: .9rem 0 0; border: 0; border-top: 1px solid var(--line); }
+.settings-a11y > legend { float: left; width: 100%; padding: 0; color: var(--ink); }
+.settings-restore { position: absolute; top: .55rem; right: 0; width: 30px; height: 30px; color: var(--muted); }
+.settings-restore:hover { border-color: var(--accent); color: var(--accent); }
+/* Switches: native checkboxes with role="switch". */
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: .8rem; cursor: pointer; }
+.switch-row input { appearance: none; position: relative; flex: none; width: 38px; height: 22px; margin: 0; border: 1px solid var(--line-strong); border-radius: 999px; background: color-mix(in srgb, var(--ink) 6%, var(--surface)); cursor: pointer; transition: background var(--motion-base, .2s), border-color var(--motion-base, .2s); }
+.switch-row input::before { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); transition: translate var(--motion-base, .2s) var(--ease-out, ease), background var(--motion-base, .2s); }
+.switch-row input:checked { border-color: var(--signal); background: var(--signal); }
+.switch-row input:checked::before { translate: 16px 0; background: #07110f; }
 .check-row { display: flex !important; align-items: center; justify-content: flex-start !important; gap: .55rem !important; }
 .check-row input { width: 18px; height: 18px; accent-color: var(--accent); }
 .mobile-menu { display: none; }
@@ -112,7 +132,7 @@ img, svg { max-width: 100%; }
 .primary-button.small { min-height: 38px; font-size: .62rem; }
 .secondary-button { border-color: var(--line-strong); background: transparent; color: var(--ink); }
 .danger-button { background: var(--red); color: #fff; }
-.text-button { border: 0; background: transparent; color: var(--cyan); font-weight: 750; text-align: left; text-decoration: underline; text-underline-offset: 3px; }
+.text-button { border: 0; background: transparent; color: var(--cyan); font-family: var(--font-mono); font-weight: 500; text-align: left; text-decoration: underline; text-underline-offset: 3px; }
 .icon-button { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--line-strong); border-radius: 50%; background: transparent; }
 button:disabled { cursor: not-allowed; opacity: .45; }
 
@@ -158,7 +178,7 @@ th, td { padding: .65rem; border: 1px solid var(--line); text-align: left; font-
 .panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .panel-heading h2 { margin: 0; font: 500 1.5rem var(--font-display); }
 
-.global-footer { display: grid; grid-template-columns: 1fr auto; gap: 1.2rem 3rem; padding: 2.5rem clamp(1rem, 4vw, 4rem) 5rem; border-top: 1px solid var(--line); background: var(--paper-2); }
+.global-footer { display: grid; grid-template-columns: 1fr auto; gap: .35rem 3rem; padding: 1.2rem clamp(1rem, 4vw, 4rem); border-top: 1px solid var(--line); background: var(--paper-2); }
 .global-footer p { margin: 0; font-size: .8rem; }
 .global-footer p a { color: var(--accent); font-weight: 800; }
 .global-footer nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .7rem 1.2rem; font-size: .7rem; }
@@ -171,6 +191,14 @@ th, td { padding: .65rem; border: 1px solid var(--line); text-align: left; font-
 .modal::before { content: ''; position: absolute; top: -1px; left: -1px; width: 64px; height: 2px; background: var(--accent); box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 70%, transparent); }
 .modal h2 { font: 500 1.9rem/1.05 var(--font-display); letter-spacing: -.04em; }
 .modal > div { display: flex; justify-content: flex-end; gap: .7rem; margin-top: 1.3rem; }
+.modal > .new-project-choices { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; margin-top: 1.2rem; }
+.new-project-choices button { display: grid; justify-items: start; align-content: start; gap: .45rem; padding: 1rem; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--paper-2); color: var(--ink); text-align: left; }
+.new-project-choices button svg { color: var(--accent); }
+.new-project-choices button strong { font: 700 .66rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+.new-project-choices button span { color: var(--muted); font-size: .78rem; line-height: 1.4; }
+.new-project-choices button:hover { border-color: var(--accent); }
+.new-project-error { margin-top: .8rem; color: var(--red); font-size: .8rem; }
+@media (max-width: 520px) { .modal > .new-project-choices { grid-template-columns: 1fr; } }
 .undo-toast { position: fixed; z-index: 250; left: 50%; bottom: 1.3rem; transform: translateX(-50%); padding: .8rem 1rem; border: 1px solid color-mix(in srgb, var(--signal) 40%, transparent); background: #07110f; color: #f0eee6; box-shadow: var(--shadow), 0 0 28px rgb(184 255 74 / 14%); font-size: .8rem; }
 .undo-toast button { border: 0; background: transparent; color: var(--signal); font-weight: 800; }
 
@@ -187,7 +215,8 @@ th, td { padding: .65rem; border: 1px solid var(--line); text-align: left; font-
   /* Anchor dropdown panels to the header so they stay inside narrow screens. */
   .settings-menu { position: static; }
   .settings-panel { right: .75rem; top: calc(100% + .4rem); }
-  .global-footer { grid-template-columns: 1fr; padding-bottom: 6rem; }
+  /* Clear the floating coffee/assistant buttons at the right instead of padding below. */
+  .global-footer { grid-template-columns: 1fr; padding-right: 4.5rem; }
   .global-footer nav { justify-content: flex-start; }
   .coffee-button span { display: none; }
   .coffee-button { width: 48px; justify-content: center; padding: 0; }

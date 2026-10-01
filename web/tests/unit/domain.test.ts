@@ -52,6 +52,11 @@ describe('motor de domínio', () => {
     expect(migrated.presentation.diagramStyle).toBe('classic');
   });
 
+  it('recusa JSON que não é um projeto', () => {
+    expect(() => migrateProject({ not: 'a project' })).toThrow();
+    expect(() => migrateProject(null)).toThrow();
+  });
+
   it('usa o diagrama PRISMA clássico como visual padrão', () => {
     expect(createProject().presentation.diagramStyle).toBe('classic');
   });
@@ -72,6 +77,20 @@ describe('motor de domínio', () => {
     const project = createProject({ title: 'Revisão: Saúde & Educação', example: true });
     expect(restoreProject(serializeProject(project))).toEqual(project);
     expect(safeFileName(project.title, '.json')).toBe('revisao-saude-educacao.json');
+  });
+
+  // The landing page promises this: Simetrics exports a .json that imports as-is.
+  it('importa o .json exportado pelo Simetrics', () => {
+    const base = createProject();
+    const simetrics = {
+      ...base, title: 'Memetics and cultural evolution: a scoping review', locale: 'en', updatedDate: '2026-10-01',
+      sources: [{ id: 'e034da07-a284-4ce3-961c-962e71ea4863', type: 'database', name: 'Outra', count: 331 }],
+      counts: { ...base.counts, databases: 331, registers: 0, duplicates: 0, automationExcluded: 0, removedOther: 0, screened: 331, recordsExcluded: 0 },
+      history: [{ id: '766c1630-dff3-436f-9a27-9583449bdff0', at: '2026-10-01T22:13:37.758Z', action: 'Imported from Simetrics' }],
+    };
+    const project = restoreProject(JSON.stringify(simetrics));
+    expect(project.counts.databases).toBe(331);
+    expect(project.history.at(-1)?.action).toBe('Imported from Simetrics');
   });
 
   it('gera descrição textual com as unidades científicas', () => {

@@ -49,11 +49,11 @@ test('cria os quatro modelos, valida inconsistência e persiste o projeto', asyn
 test('troca idioma, tema, contraste e navega por teclado', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('prisma-locale', 'pt-BR'));
   await page.goto('/');
-  await expect(page.getByLabel('Idioma')).toBeEnabled();
+  await expect(page.getByLabel('English', { exact: true })).toBeEnabled();
   await page.getByLabel('Configurações').click();
-  await page.getByLabel('Idioma').selectOption('en');
+  await page.getByRole('radio', { name: 'English' }).check();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await page.getByLabel('Theme').selectOption('dark');
+  await page.getByRole('radio', { name: 'Dark' }).check();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.getByLabel('High contrast').check();
   await expect(page.locator('html')).toHaveAttribute('data-contrast', 'high');
@@ -98,7 +98,7 @@ test('backup JSON, exportações e restauração', async ({ page }) => {
 test('importa e valida tabelas CSV e XLSX', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('prisma-locale', 'pt-BR'));
   await page.goto('/projects');
-  await expect(page.getByLabel('Idioma')).toBeEnabled();
+  await expect(page.getByLabel('English', { exact: true })).toBeEnabled();
   const input = page.getByLabel('Selecionar arquivo');
   await input.setInputFiles({
     name: 'contagens.csv',
@@ -125,20 +125,20 @@ test('matriz visual de idiomas, temas e viewports', async ({ page }, testInfo) =
   test.setTimeout(90_000);
   await page.addInitScript(() => localStorage.setItem('prisma-locale', 'pt-BR'));
   await page.goto('/');
-  await expect(page.getByLabel('Idioma')).toBeEnabled();
+  await expect(page.getByLabel('English', { exact: true })).toBeEnabled();
   if (testInfo.project.name.includes('mobile')) {
     await page.screenshot({ path: testInfo.outputPath('landing-mobile.png'), fullPage: true });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
     return;
   }
   await page.getByLabel('Configurações').click();
-  for (const locale of ['pt-BR', 'en', 'it', 'fr', 'de', 'zh-CN']) {
-    await page.getByLabel(/Idioma|Language|Lingua|Langue|Sprache|语言/).selectOption(locale);
+  for (const [locale, name] of [['pt-BR', 'Português (Brasil)'], ['en', 'English'], ['it', 'Italiano'], ['fr', 'Français'], ['de', 'Deutsch'], ['zh-CN', '简体中文']]) {
+    await page.getByRole('radio', { name }).check();
     await page.screenshot({ path: testInfo.outputPath(`landing-${locale}.png`), fullPage: false });
   }
-  await page.getByLabel(/Tema|Theme|Design|主题/).selectOption('light');
+  await page.getByRole('radio', { name: /Claro|Light|Chiaro|Clair|Hell|浅色/ }).check();
   await page.screenshot({ path: testInfo.outputPath('theme-light.png'), fullPage: false });
-  await page.getByLabel(/Tema|Theme|Design|主题/).selectOption('dark');
+  await page.getByRole('radio', { name: /Escuro|Dark|Scuro|Sombre|Dunkel|深色/ }).check();
   await page.screenshot({ path: testInfo.outputPath('theme-dark.png'), fullPage: false });
   const contrast = page.getByLabel(/Alto contraste|High contrast|Contrasto elevato|Contraste élevé|Hoher Kontrast|高对比度/);
   await contrast.check();

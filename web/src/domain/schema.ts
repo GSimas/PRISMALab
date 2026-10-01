@@ -39,8 +39,10 @@ export const projectSchema = z.object({
 export function migrateProject(input: unknown): PrismaProject {
   const raw = input as Record<string, unknown>;
   if (raw?.schemaVersion === SCHEMA_VERSION) return projectSchema.parse(raw) as PrismaProject;
+  // Any JSON object would otherwise "migrate" into a blank project; a project always has counts.
+  if (typeof raw?.counts !== 'object' || raw.counts === null) throw new Error('Not a PRISMA Lab project.');
   const base = createProject();
-  const legacy = raw ?? {};
+  const legacy = raw;
   return projectSchema.parse({
     ...base,
     ...legacy,

@@ -294,12 +294,19 @@
 .mapping-controls { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-bottom: 1rem; }
 .mapping-preview .primary-button { margin-top: 1rem; }
 
-@media (min-width: 1181px) {
-  .builder-page:has(> .builder-workspace) { display: flex; flex-direction: column; height: calc(100dvh - var(--header-height)); }
+/* App shell: the project screens fit the viewport; only side panels, canvas and module pages scroll.
+   Phones keep natural page scrolling (panels stack there). */
+@media screen and (min-width: 781px) {
+  html:has(.builder-page) { overflow: hidden; }
+  body:has(.builder-page) { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+  body:has(.builder-page) .global-footer { display: none; }
+  .builder-page { display: flex; flex: 1; flex-direction: column; min-height: 0; }
   .builder-page > .builder-workspace { flex: 1; min-height: 0; grid-template-rows: 100%; }
+  .builder-page > .single-module { flex: 1; min-height: 0; overflow-y: auto; }
   .data-panel, .context-panel { max-height: none; }
   .diagram-panel { min-height: 0; }
   .diagram-scroller { height: 100%; }
+  .diagram-alternative[open] { max-height: 40%; overflow-y: auto; }
 }
 @media (max-width: 1240px) {
   .progress-copy { display: none; }

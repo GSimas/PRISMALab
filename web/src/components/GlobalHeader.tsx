@@ -1,10 +1,13 @@
 'use client';
 
 import { useRef } from 'react';
-import { FolderOpen, Menu, Settings2 } from 'lucide-react';
+import { FolderOpen, Menu, Monitor, Moon, RotateCcw, Settings2, Sun } from 'lucide-react';
 import { useApp } from '../app/AppProviders';
 import { localeNames } from '../i18n/translations';
 import { supportedLocales } from '../i18n/locale';
+
+const themeOptions = [{ value: 'system', Icon: Monitor }, { value: 'light', Icon: Sun }, { value: 'dark', Icon: Moon }] as const;
+const fontScales = [1, 1.125, 1.25] as const;
 
 export function GlobalHeader() {
   const { ready, locale, setLocale, theme, setTheme, accessibility, setAccessibility, restoreAccessibility, t } = useApp();
@@ -32,28 +35,23 @@ export function GlobalHeader() {
           <details className="settings-menu" ref={settingsMenu} onToggle={(event) => { if (event.currentTarget.open && navMenu.current) navMenu.current.open = false; }}>
             <summary aria-label={t('settings')} title={t('settings')}><Settings2 size={18} aria-hidden="true" /></summary>
             <div className="settings-panel">
-              <label>{t('language')}
-                <select disabled={!ready} value={locale} onChange={(event) => setLocale(event.target.value as typeof locale)}>
-                  {supportedLocales.map((code) => <option key={code} value={code}>{localeNames[code]}</option>)}
-                </select>
-              </label>
-              <label>{t('theme')}
-                <select disabled={!ready} value={theme} onChange={(event) => setTheme(event.target.value as typeof theme)}>
-                  <option value="system">{t('system')}</option>
-                  <option value="light">{t('light')}</option>
-                  <option value="dark">{t('dark')}</option>
-                </select>
-              </label>
+              <fieldset className="settings-choices locale-choices" disabled={!ready}>
+                <legend>{t('language')}</legend>
+                {supportedLocales.map((code) => <label key={code}><input type="radio" name="prisma-locale" value={code} checked={locale === code} onChange={() => setLocale(code)} />{localeNames[code]}</label>)}
+              </fieldset>
+              <fieldset className="settings-choices" disabled={!ready}>
+                <legend>{t('theme')}</legend>
+                {themeOptions.map(({ value, Icon }) => <label key={value}><input type="radio" name="prisma-theme" value={value} checked={theme === value} onChange={() => setTheme(value)} /><Icon size={14} aria-hidden="true" />{t(value)}</label>)}
+              </fieldset>
               <fieldset className="settings-a11y">
                 <legend>{t('accessibility')}</legend>
-                <label>{t('fontSize')}
-                  <select value={accessibility.fontScale} onChange={(event) => setAccessibility({ ...accessibility, fontScale: Number(event.target.value) as 1 | 1.125 | 1.25 })}>
-                    <option value="1">100%</option><option value="1.125">112%</option><option value="1.25">125%</option>
-                  </select>
-                </label>
-                <label className="check-row"><input type="checkbox" checked={accessibility.contrast} onChange={(event) => setAccessibility({ ...accessibility, contrast: event.target.checked })} /> {t('highContrast')}</label>
-                <label className="check-row"><input type="checkbox" checked={accessibility.reduceMotion} onChange={(event) => setAccessibility({ ...accessibility, reduceMotion: event.target.checked })} /> {t('reduceMotion')}</label>
-                <button className="text-button" type="button" onClick={restoreAccessibility}>{t('restore')}</button>
+                <button className="icon-button settings-restore" type="button" onClick={restoreAccessibility} aria-label={t('restore')} title={t('restore')}><RotateCcw size={15} aria-hidden="true" /></button>
+                <fieldset className="settings-choices">
+                  <legend>{t('fontSize')}</legend>
+                  {fontScales.map((scale) => <label key={scale}><input type="radio" name="prisma-font-scale" value={scale} checked={accessibility.fontScale === scale} onChange={() => setAccessibility({ ...accessibility, fontScale: scale })} />{Math.floor(scale * 100)}%</label>)}
+                </fieldset>
+                <label className="switch-row">{t('highContrast')}<input type="checkbox" role="switch" checked={accessibility.contrast} onChange={(event) => setAccessibility({ ...accessibility, contrast: event.target.checked })} /></label>
+                <label className="switch-row">{t('reduceMotion')}<input type="checkbox" role="switch" checked={accessibility.reduceMotion} onChange={(event) => setAccessibility({ ...accessibility, reduceMotion: event.target.checked })} /></label>
               </fieldset>
             </div>
           </details>

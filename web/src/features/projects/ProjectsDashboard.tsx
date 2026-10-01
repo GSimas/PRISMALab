@@ -11,6 +11,7 @@ import type { PrismaProject, ProjectStatus } from '../../domain/types';
 import { deleteProject, duplicateProject, listProjects, saveProject } from '../../storage/db';
 import { exportProject } from '../export/exporters';
 import { ImportWizard } from '../import/ImportWizard';
+import { NewProjectDialog } from '../../components/NewProjectDialog';
 
 export function ProjectsDashboard() {
   const { locale, t } = useApp();
@@ -18,6 +19,7 @@ export function ProjectsDashboard() {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<ProjectStatus | 'all'>('all');
   const [sort, setSort] = useState<'updated' | 'title'>('updated');
+  const [choosing, setChoosing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<PrismaProject | null>(null);
   const [deleted, setDeleted] = useState<PrismaProject | null>(null);
   const [renaming, setRenaming] = useState<PrismaProject | null>(null);
@@ -43,8 +45,8 @@ export function ProjectsDashboard() {
     [projects, query, sort, status],
   );
 
-  const openNew = async (example = false) => {
-    const project = createProject({ locale, model: example ? 'new-databases-other' : 'new-databases', example });
+  const openExample = async () => {
+    const project = createProject({ locale, model: 'new-databases-other', example: true });
     await saveProject(project);
     window.location.href = `/builder?project=${project.id}`;
   };
@@ -64,7 +66,7 @@ export function ProjectsDashboard() {
           <h1>{t('dashboard')}</h1>
           <p>{t('projectsHeroLead')}</p>
         </div>
-        <button className="primary-button" type="button" onClick={() => openNew(false)}>
+        <button className="primary-button" type="button" onClick={() => setChoosing(true)}>
           <FilePlus2 size={18} /> {t('newDiagram')}
         </button>
       </header>
@@ -91,7 +93,7 @@ export function ProjectsDashboard() {
             <option value="title">{t('title')}</option>
           </select>
         </label>
-        <button className="secondary-button" type="button" onClick={() => openNew(true)}>
+        <button className="secondary-button" type="button" onClick={openExample}>
           {t('createFromExample')}
         </button>
       </section>
@@ -138,13 +140,14 @@ export function ProjectsDashboard() {
           <span>PD—00</span>
           <h2>{t('emptyProjects')}</h2>
           <p>{t('emptyProjectsLead')}</p>
-          <button className="primary-button" onClick={() => openNew(false)}>
+          <button className="primary-button" onClick={() => setChoosing(true)}>
             {t('createFirst')}
           </button>
         </section>
       )}
 
       <ImportWizard onImport={importProject} />
+      <NewProjectDialog open={choosing} onClose={() => setChoosing(false)} />
 
       {deleting && (
         <div className="modal-backdrop" role="presentation" data-state={deleteModal.state}>

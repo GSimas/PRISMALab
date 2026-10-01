@@ -40,7 +40,7 @@ describe('sistema de movimento', () => {
     localStorage.setItem('prisma-accessibility', JSON.stringify({ contrast: false, fontScale: 1, reduceMotion: true }));
     render(<AppProviders><GlobalHeader /></AppProviders>);
 
-    await waitFor(() => expect(screen.getByLabelText('Sprache')).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'Deutsch' })).toBeEnabled());
     await waitFor(() => expect(document.documentElement.dataset.motion).toBe('reduced'));
     expect(localStorage.getItem('prisma-locale')).toBe('de');
     expect(JSON.parse(localStorage.getItem('prisma-accessibility') ?? '{}').reduceMotion).toBe(true);

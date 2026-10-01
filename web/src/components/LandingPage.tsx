@@ -1,17 +1,26 @@
 'use client';
 
-import { ArrowRight, Compass, LockKeyhole, Sparkles } from 'lucide-react';
+import { ArrowRight, ChartScatter, Compass, Database, ExternalLink, FileCheck2, LockKeyhole, Sparkles, Workflow } from 'lucide-react';
+import { useState } from 'react';
 import { useApp } from '../app/AppProviders';
 import { createExampleChecklist } from '../domain/checklist';
 import { createProject } from '../domain/project';
 import type { Locale } from '../domain/types';
 import { saveProject } from '../storage/db';
+import { NewProjectDialog } from './NewProjectDialog';
 
 interface Stage {
   label: string;
-  value: string;
   note: string;
 }
+
+/* The research journey, in order: databases → Simetrics (optional) → PRISMA Lab → diagram. */
+const journey = [
+  { Icon: Database },
+  { Icon: ChartScatter, kind: 'optional', href: 'https://simetrics.app' },
+  { Icon: Workflow, kind: 'current' },
+  { Icon: FileCheck2 },
+] as const;
 
 const landingContent: Record<
   Locale,
@@ -27,6 +36,8 @@ const landingContent: Record<
     previewMeta: [string, string];
     previewStatus: string;
     stages: Stage[];
+    optional: string;
+    current: string;
   }
 > = {
   'pt-BR': {
@@ -38,13 +49,15 @@ const landingContent: Record<
     example: 'Explorar exemplo',
     secondary: 'Entender o PRISMA',
     privacy: 'Seus projetos permanecem neste navegador. Nenhum dado é enviado por padrão.',
-    previewMeta: ['PRÉVIA DO FLUXO', 'EXEMPLO FICTÍCIO'],
-    previewStatus: 'Estrutura compatível com o modelo selecionado',
+    previewMeta: ['SUA JORNADA', 'DA BUSCA À PUBLICAÇÃO'],
+    previewStatus: 'O Simetrics exporta um .json pronto para importar aqui',
+    optional: 'opcional',
+    current: 'você está aqui',
     stages: [
-      { label: 'Identificação', value: '2.481', note: 'registros encontrados' },
-      { label: 'Triagem', value: '1.906', note: 'registros avaliados' },
-      { label: 'Elegibilidade', value: '126', note: 'relatos avaliados' },
-      { label: 'Inclusão', value: '34', note: 'estudos incluídos' },
+      { label: 'Bases científicas', note: 'Scopus, Web of Science, PubMed…' },
+      { label: 'Simetrics', note: 'deduplicação e triagem → .json' },
+      { label: 'PRISMA Lab', note: 'contagens, validação e checklist' },
+      { label: 'Diagrama PRISMA 2020', note: 'pronto para a sua publicação' },
     ],
   },
   en: {
@@ -56,13 +69,15 @@ const landingContent: Record<
     example: 'Explore example',
     secondary: 'Understand PRISMA',
     privacy: 'Projects stay in this browser. No data is sent by default.',
-    previewMeta: ['FLOW PREVIEW', 'SAMPLE WORKFLOW'],
-    previewStatus: 'Structure compatible with the selected model',
+    previewMeta: ['YOUR JOURNEY', 'FROM SEARCH TO PUBLICATION'],
+    previewStatus: 'Simetrics exports a .json ready to import here',
+    optional: 'optional',
+    current: 'you are here',
     stages: [
-      { label: 'Identification', value: '2,481', note: 'records found' },
-      { label: 'Screening', value: '1,906', note: 'records screened' },
-      { label: 'Eligibility', value: '126', note: 'reports assessed' },
-      { label: 'Inclusion', value: '34', note: 'studies included' },
+      { label: 'Scientific databases', note: 'Scopus, Web of Science, PubMed…' },
+      { label: 'Simetrics', note: 'deduplication and screening → .json' },
+      { label: 'PRISMA Lab', note: 'counts, validation and checklist' },
+      { label: 'PRISMA 2020 diagram', note: 'ready for your publication' },
     ],
   },
   it: {
@@ -74,13 +89,15 @@ const landingContent: Record<
     example: 'Esplora un esempio',
     secondary: 'Comprendere PRISMA',
     privacy: 'I progetti restano nel browser. Nessun dato viene inviato per impostazione predefinita.',
-    previewMeta: ['ANTEPRIMA DEL FLUSSO', 'ESEMPIO FITTIZIO'],
-    previewStatus: 'Struttura compatibile con il modello selezionato',
+    previewMeta: ['IL TUO PERCORSO', 'DALLA RICERCA ALLA PUBBLICAZIONE'],
+    previewStatus: 'Simetrics esporta un .json pronto da importare qui',
+    optional: 'facoltativo',
+    current: 'sei qui',
     stages: [
-      { label: 'Identificazione', value: '2.481', note: 'record trovati' },
-      { label: 'Screening', value: '1.906', note: 'record esaminati' },
-      { label: 'Idoneità', value: '126', note: 'report valutati' },
-      { label: 'Inclusione', value: '34', note: 'studi inclusi' },
+      { label: 'Banche dati scientifiche', note: 'Scopus, Web of Science, PubMed…' },
+      { label: 'Simetrics', note: 'deduplicazione e screening → .json' },
+      { label: 'PRISMA Lab', note: 'conteggi, validazione e checklist' },
+      { label: 'Diagramma PRISMA 2020', note: 'pronto per la tua pubblicazione' },
     ],
   },
   fr: {
@@ -92,13 +109,15 @@ const landingContent: Record<
     example: 'Explorer un exemple',
     secondary: 'Comprendre PRISMA',
     privacy: 'Les projets restent dans ce navigateur. Aucune donnée n’est envoyée par défaut.',
-    previewMeta: ['APERÇU DU FLUX', 'EXEMPLE FICTIF'],
-    previewStatus: 'Structure compatible avec le modèle sélectionné',
+    previewMeta: ['VOTRE PARCOURS', 'DE LA RECHERCHE À LA PUBLICATION'],
+    previewStatus: 'Simetrics exporte un .json prêt à importer ici',
+    optional: 'facultatif',
+    current: 'vous êtes ici',
     stages: [
-      { label: 'Identification', value: '2 481', note: 'enregistrements trouvés' },
-      { label: 'Sélection', value: '1 906', note: 'enregistrements examinés' },
-      { label: 'Éligibilité', value: '126', note: 'rapports évalués' },
-      { label: 'Inclusion', value: '34', note: 'études incluses' },
+      { label: 'Bases de données scientifiques', note: 'Scopus, Web of Science, PubMed…' },
+      { label: 'Simetrics', note: 'dédoublonnage et sélection → .json' },
+      { label: 'PRISMA Lab', note: 'comptages, validation et checklist' },
+      { label: 'Diagramme PRISMA 2020', note: 'prêt pour votre publication' },
     ],
   },
   de: {
@@ -110,13 +129,15 @@ const landingContent: Record<
     example: 'Beispiel erkunden',
     secondary: 'PRISMA verstehen',
     privacy: 'Projekte bleiben in diesem Browser. Daten werden standardmäßig nicht gesendet.',
-    previewMeta: ['FLUSS-VORSCHAU', 'BEISPIELABLAUF'],
-    previewStatus: 'Struktur kompatibel mit dem gewählten Modell',
+    previewMeta: ['IHR WEG', 'VON DER SUCHE ZUR PUBLIKATION'],
+    previewStatus: 'Simetrics exportiert eine .json, die Sie hier importieren können',
+    optional: 'optional',
+    current: 'Sie sind hier',
     stages: [
-      { label: 'Identifikation', value: '2.481', note: 'Datensätze gefunden' },
-      { label: 'Screening', value: '1.906', note: 'Datensätze geprüft' },
-      { label: 'Eignung', value: '126', note: 'Berichte bewertet' },
-      { label: 'Einschluss', value: '34', note: 'Studien eingeschlossen' },
+      { label: 'Wissenschaftliche Datenbanken', note: 'Scopus, Web of Science, PubMed…' },
+      { label: 'Simetrics', note: 'Deduplizierung und Screening → .json' },
+      { label: 'PRISMA Lab', note: 'Zählungen, Validierung und Checkliste' },
+      { label: 'PRISMA-2020-Diagramm', note: 'bereit für Ihre Publikation' },
     ],
   },
   'zh-CN': {
@@ -128,13 +149,15 @@ const landingContent: Record<
     example: '浏览示例',
     secondary: '了解 PRISMA',
     privacy: '项目保存在此浏览器中，默认不会发送任何数据。',
-    previewMeta: ['流程预览', '示例流程'],
-    previewStatus: '与所选模型兼容的结构',
+    previewMeta: ['你的研究路径', '从检索到发表'],
+    previewStatus: 'Simetrics 导出的 .json 可直接导入此处',
+    optional: '可选',
+    current: '你在这里',
     stages: [
-      { label: '识别', value: '2,481', note: '条检索到的记录' },
-      { label: '筛选', value: '1,906', note: '条已筛选的记录' },
-      { label: '合格性', value: '126', note: '份已评估的报告' },
-      { label: '纳入', value: '34', note: '项已纳入的研究' },
+      { label: '科学数据库', note: 'Scopus、Web of Science、PubMed…' },
+      { label: 'Simetrics', note: '去重与筛选 → .json' },
+      { label: 'PRISMA Lab', note: '计数、校验与清单' },
+      { label: 'PRISMA 2020 流程图', note: '可直接用于发表' },
     ],
   },
 };
@@ -142,6 +165,7 @@ const landingContent: Record<
 export function LandingPage() {
   const { locale, t } = useApp();
   const text = landingContent[locale] || landingContent['pt-BR'];
+  const [choosing, setChoosing] = useState(false);
 
   const exploreExample = async () => {
     const project = createProject({ locale, model: 'new-databases-other', example: true });
@@ -161,9 +185,9 @@ export function LandingPage() {
           </h1>
           <p className="hero-lead">{text.lead}</p>
           <div className="hero-actions">
-            <a className="primary-button" href="/builder">
+            <button className="primary-button" type="button" onClick={() => setChoosing(true)}>
               {text.primary} <ArrowRight size={17} />
-            </a>
+            </button>
             <button className="secondary-button" type="button" onClick={exploreExample}>
               <Sparkles size={17} /> {text.example}
             </button>
@@ -188,24 +212,34 @@ export function LandingPage() {
             <span>{text.previewMeta[0]}</span>
             <span>{text.previewMeta[1]}</span>
           </div>
-          <div className="flow">
-            {text.stages.map((stage, index) => (
-              <div className="flow-step" key={stage.label}>
-                <span className="stage-number">0{index + 1}</span>
-                <div className="flow-card">
+          <ol className="flow">
+            {text.stages.map((stage, index) => {
+              const { Icon, ...step } = journey[index];
+              const kind = 'kind' in step ? step.kind : undefined;
+              const body = (
+                <>
                   <small>{stage.label}</small>
-                  <strong>{stage.value}</strong>
                   <span>{stage.note}</span>
-                </div>
-                {index < text.stages.length - 1 && <span className="flow-line" />}
-              </div>
-            ))}
-          </div>
+                  {kind && <em className="flow-tag">{text[kind]}{'href' in step && <ExternalLink size={11} aria-hidden="true" />}</em>}
+                </>
+              );
+              return (
+                <li className="flow-step" key={stage.label}>
+                  <span className="stage-icon"><Icon size={16} aria-hidden="true" /></span>
+                  {'href' in step
+                    ? <a className={`flow-card is-${kind}`} href={step.href} target="_blank" rel="noopener noreferrer">{body}</a>
+                    : <div className={`flow-card${kind ? ` is-${kind}` : ''}`} aria-current={kind === 'current' ? 'step' : undefined}>{body}</div>}
+                  {index < text.stages.length - 1 && <span className="flow-line" />}
+                </li>
+              );
+            })}
+          </ol>
           <div className="preview-status">
             <span className="status-dot" /> {text.previewStatus}
           </div>
         </div>
       </section>
+      <NewProjectDialog open={choosing} onClose={() => setChoosing(false)} />
     </main>
   );
 }
