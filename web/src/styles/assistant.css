@@ -81,6 +81,14 @@
   .assistant-fab { right: .8rem; bottom: 4.6rem; }
 }
 
+/* The builder has no floating coffee button, so Primi takes its corner. */
+body:has(.builder-page) .assistant-fab { bottom: 1rem; }
+body:has(.builder-page) .assistant-panel { bottom: 5.8rem; height: min(560px, calc(100vh - 8rem)); }
+@media (max-width: 520px) {
+  body:has(.builder-page) .assistant-fab { bottom: .8rem; }
+  body:has(.builder-page) .assistant-panel { bottom: 4.6rem; }
+}
+
 @media print {
   .assistant-fab, .assistant-panel { display: none !important; }
 }

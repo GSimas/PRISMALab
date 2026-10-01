@@ -65,9 +65,10 @@ test('backup JSON, exportações e restauração', async ({ page }) => {
   const backup = await backupEvent;
   const backupPath = await backup.path();
   expect(backupPath).toBeTruthy();
-  await page.getByRole('tab', { name: 'Dados' }).click();
+  await page.getByRole('tab', { name: 'Diagrama' }).click();
   await page.locator('.project-title-input').fill('Título alterado');
-  await page.getByRole('tab', { name: 'Importar' }).click();
+  await page.getByLabel('Mais ações').click();
+  await page.getByRole('button', { name: 'Importar' }).click();
   await page.getByLabel('Selecionar arquivo').setInputFiles({
     name: 'backup.json',
     mimeType: 'application/json',

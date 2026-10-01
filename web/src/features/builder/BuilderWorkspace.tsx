@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
-import { ArrowRight, Circle, CircleCheck, CircleDashed, Compass, Download, FileCheck2, Focus, HelpCircle, Maximize2, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Redo2, Sparkles, Trash2, TriangleAlert, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowRight, ChevronDown, Circle, CircleCheck, CircleDashed, Coffee, Compass, Ellipsis, FileCheck2, Focus, HelpCircle, Maximize2, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Redo2, Sparkles, Table2, Trash2, TriangleAlert, Undo2, Upload, ZoomIn, ZoomOut } from 'lucide-react';
 import { useApp } from '../../app/AppProviders';
 import { useProjectStore } from '../../app/store';
 import { usePresence } from '../../app/usePresence';
@@ -10,7 +10,7 @@ import { calculateProject, emptyCounts, hasOtherSources, isUpdatedModel, selectM
 import { createExampleChecklist, createChecklist } from '../../domain/checklist';
 import { bandProgress, completenessFor, type CompletenessStageId, type StageStatus } from '../../domain/completeness';
 import { createProject } from '../../domain/project';
-import { countKeys, type CountKey, type NodeProvenance, type PrismaProject, type SourceItem, type ValidationIssue } from '../../domain/types';
+import { countKeys, type CalculatedCounts, type CountKey, type NodeProvenance, type PrismaProject, type SourceItem, type ValidationIssue } from '../../domain/types';
 import { validateProject } from '../../domain/validation';
 import { fieldDefinitions, fieldLabels, type TranslationKey } from '../../i18n/translations';
 import { getProject, saveProject } from '../../storage/db';
@@ -39,6 +39,21 @@ const stageStatusKey: Record<StageStatus, TranslationKey> = {
   'in-progress': 'stageStatusInProgress',
   pending: 'stageStatusPending',
   attention: 'stageStatusAttention',
+};
+
+const originKey: Record<CalculatedCounts['origins'][CountKey], TranslationKey> = {
+  informed: 'informed',
+  derived: 'derived',
+  override: 'override',
+  'not-applicable': 'notApplicable',
+};
+
+const issueStatusKey: Record<ValidationIssue['status'], TranslationKey> = {
+  valid: 'statusValid',
+  attention: 'statusAttention',
+  inconsistency: 'statusInconsistency',
+  missing: 'statusMissing',
+  'not-applicable': 'notApplicable',
 };
 
 const stageIcons: Record<StageStatus, ReactNode> = {
@@ -72,6 +87,8 @@ export function BuilderWorkspace() {
   const [collapsed, setCollapsed] = useState<Panels>({ data: false, context: false });
   const clearModal = usePresence(confirmClear);
   const workspaceRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDetailsElement>(null);
+  const tableRef = useRef<HTMLDetailsElement>(null);
   const flashTimeoutRef = useRef<number | undefined>(undefined);
 
   const labels = fieldLabels[locale] || fieldLabels['pt-BR'];
@@ -161,6 +178,40 @@ export function BuilderWorkspace() {
     return () => { window.clearTimeout(announce); window.clearTimeout(settle); };
   }, [completeness, project.id]); // eslint-disable-line react-hooks/exhaustive-deps -- t/stageTitle only format the message
 
+  // The "more actions" menu closes on Escape, on a click outside it, and after any action.
+  const closeMenu = () => { if (menuRef.current) menuRef.current.open = false; };
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => { if (menuRef.current?.open && !menuRef.current.contains(event.target as Node)) closeMenu(); };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || !menuRef.current?.open) return;
+      closeMenu();
+      menuRef.current.querySelector('summary')?.focus();
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => { document.removeEventListener('pointerdown', onPointerDown); document.removeEventListener('keydown', onKeyDown); };
+  }, []);
+  const menuAction = (action: () => void) => () => { closeMenu(); action(); };
+
+  const goToModel = () => {
+    if (tab !== 'data') flushSync(() => setTab('data'));
+    focusById('model-fieldset');
+  };
+
+  const openValidation = () => {
+    if (tab !== 'data') flushSync(() => setTab('data'));
+    focusById('validation-panel');
+  };
+
+  const toggleTable = () => {
+    const details = tableRef.current;
+    if (!details) return;
+    details.open = !details.open;
+    if (details.open) details.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+
+  const alertCount = issues.filter((item) => item.status !== 'valid').length;
+  const modelLabel = `${project.reviewKind === 'updated' ? t('updatedReview') : t('newReview')} · ${hasOtherSources(project.model) ? t('modelWithOther') : t('modelDatabasesOnly')}`;
   const nextLabel = completeness.next ? (completeness.next.field === 'websites' ? t('sectionOtherMethods') : labels[completeness.next.field]) : '';
   const allFilled = completeness.filled === completeness.total;
 
@@ -402,67 +453,74 @@ export function BuilderWorkspace() {
 
   return (
     <main id="main-content" className="builder-page" data-app-ready={ready ? 'true' : 'false'} aria-busy={!ready}>
-      <header className="builder-project-header">
-        <div>
-          <p className="kicker">{project.guideline} · {project.model.replaceAll('-', ' ')}</p>
-          <input className="project-title-input" aria-label={t('title')} value={project.title} onChange={(event) => patchProject({ title: event.target.value }, 'Título alterado')} />
-        </div>
-        <div className="builder-header-status">
-          <div className={`builder-progress${completeness.complete ? ' is-complete' : ''}${celebrate ? ' celebrate' : ''}`}>
-            <div
-              className="completeness-ring"
-              role="progressbar"
-              aria-label={t('completenessLabel')}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={completeness.percent}
-              aria-valuetext={`${completeness.percent}% · ${stagesDone}/${completeness.stages.length} ${t('stagesLabel')}`}
-            >
-              <svg viewBox="0 0 36 36" aria-hidden="true">
-                <circle className="completeness-track" cx="18" cy="18" r="15" />
-                <circle className="completeness-bar" cx="18" cy="18" r="15" pathLength={100} strokeDasharray={`${completeness.percent} 100`} />
-              </svg>
-              <span aria-hidden="true">{completeness.complete ? <CircleCheck size={16} /> : `${completeness.percent}%`}</span>
-            </div>
-            <div className="progress-copy">
-              <strong>{completeness.complete ? t('diagramComplete') : allFilled ? t('reviewAlerts') : `${stagesDone}/${completeness.stages.length} ${t('stagesLabel')}`}</strong>
-              {completeness.next ? (
-                <button type="button" className="progress-action" disabled={!ready} onClick={() => goToField(completeness.next!.field)} title={`${t('nextStep')}: ${nextLabel}`}><span>{t('nextStep')}: {nextLabel}</span> <ArrowRight size={13} aria-hidden="true" /></button>
-              ) : completeness.complete ? (
-                <button type="button" className="progress-action" disabled={!ready} onClick={() => setTab('export')}>{t('export')} <ArrowRight size={13} aria-hidden="true" /></button>
-              ) : (
-                <button type="button" className="progress-action" disabled={!ready} onClick={reviewFirstAlert}>{t('validation')} <ArrowRight size={13} aria-hidden="true" /></button>
-              )}
-            </div>
-            <div className="sr-only" role="status" aria-live="polite">{progressMessage}</div>
+      <header className="builder-bar">
+        <div className="builder-bar-project">
+          <h1 className="sr-only">{project.title.trim() || t('title')}</h1>
+          <input id="project-title-field" className="project-title-input" aria-label={t('title')} value={project.title} onChange={(event) => patchProject({ title: event.target.value }, 'Título alterado')} />
+          <div className="builder-bar-meta">
+            <button type="button" className="model-chip" onClick={goToModel} disabled={!ready} title={t('changeModel')} aria-label={`${t('flowType')}: ${modelLabel}. ${t('changeModel')}`}>
+              {modelLabel} <ChevronDown size={13} aria-hidden="true" />
+            </button>
+            <span className="save-indicator" role="status" aria-live="polite"><span className={saveState} />{saveState === 'saving' ? t('saving') : t('saved')}</span>
           </div>
-          <div className="save-indicator" role="status" aria-live="polite"><span className={saveState} />{saveState === 'saving' ? t('saving') : t('saved')}</div>
         </div>
-      </header>
 
-      <div className="builder-toolbar" aria-label="Ferramentas do diagrama">
-        <button type="button" onClick={undo} disabled={!past.length} title={t('undo')}><Undo2 /><span>{t('undo')}</span></button>
-        <button type="button" onClick={redo} disabled={!future.length} title={t('redo')}><Redo2 /><span>{t('redo')}</span></button>
-        <span className="toolbar-divider" />
-        <button type="button" onClick={() => setZoom((value) => Math.max(MIN_ZOOM, value / ZOOM_STEP))} disabled={zoom <= MIN_ZOOM} title={t('zoomOut')}><ZoomOut /><span>−</span></button>
-        <output aria-label={t('zoomLevel')}>{Math.round(zoom * 100)}%</output>
-        <button type="button" onClick={() => setZoom((value) => Math.min(MAX_ZOOM, value * ZOOM_STEP))} disabled={zoom >= MAX_ZOOM} title={t('zoomIn')}><ZoomIn /><span>+</span></button>
-        <button type="button" onClick={() => setZoom(0.82)} title={t('fit')}><Focus /><span>{t('fit')}</span></button>
-        <button type="button" onClick={() => workspaceRef.current?.requestFullscreen()} title={t('fullscreen')}><Maximize2 /><span>{t('fullscreen')}</span></button>
-        <button type="button" onClick={() => setTab('export')} title={t('export')}><Download /><span>{t('export')}</span></button>
-        <button type="button" onClick={() => window.print()} title={t('printPreview')}><FileCheck2 /><span>{t('printPreview')}</span></button>
-        <button type="button" onClick={() => setTouring(true)} disabled={!ready} title={t('tourStart')}><Compass /><span>{t('tourStart')}</span></button>
-        <a href="/learn" title={t('help')}><HelpCircle /><span>{t('help')}</span></a>
-        <button type="button" onClick={() => setConfirmClear(true)} title={t('clearAll')}><Trash2 /><span>{t('clearAll')}</span></button>
-        <button type="button" onClick={loadExample} title={t('example')}><Sparkles /><span>{t('example')}</span></button>
-      </div>
+        <div className="builder-tabs" role="tablist" aria-label="Módulos do construtor">
+          <button role="tab" disabled={!ready} aria-selected={tab === 'data'} onClick={() => setTab('data')}>{t('diagramTab')}</button>
+          <button role="tab" disabled={!ready} aria-selected={tab === 'checklist'} onClick={() => setTab('checklist')}>{t('checklist')}</button>
+          <button role="tab" disabled={!ready} aria-selected={tab === 'export'} onClick={() => setTab('export')}>{t('export')}</button>
+        </div>
 
-      <div className="builder-tabs" role="tablist" aria-label="Módulos do construtor">
-        <button role="tab" disabled={!ready} aria-selected={tab === 'data'} onClick={() => setTab('data')}>{t('data')}</button>
-        <button role="tab" disabled={!ready} aria-selected={tab === 'checklist'} onClick={() => setTab('checklist')}>{t('checklist')}</button>
-        <button role="tab" disabled={!ready} aria-selected={tab === 'export'} onClick={() => setTab('export')}>{t('export')}</button>
-        <button role="tab" disabled={!ready} aria-selected={tab === 'import'} onClick={() => setTab('import')}>{t('import')}</button>
-      </div>
+        <div className="builder-bar-tools">
+            <div className={`builder-progress${completeness.complete ? ' is-complete' : ''}${celebrate ? ' celebrate' : ''}`}>
+              <div
+                className="completeness-ring"
+                role="progressbar"
+                aria-label={t('completenessLabel')}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={completeness.percent}
+                aria-valuetext={`${completeness.percent}% · ${stagesDone}/${completeness.stages.length} ${t('stagesLabel')}`}
+              >
+                <svg viewBox="0 0 36 36" aria-hidden="true">
+                  <circle className="completeness-track" cx="18" cy="18" r="15" />
+                  <circle className="completeness-bar" cx="18" cy="18" r="15" pathLength={100} strokeDasharray={`${completeness.percent} 100`} />
+                </svg>
+                <span aria-hidden="true">{completeness.complete ? <CircleCheck size={16} /> : `${completeness.percent}%`}</span>
+              </div>
+              <div className="progress-copy">
+                <strong>{completeness.complete ? t('diagramComplete') : allFilled ? t('reviewAlerts') : `${stagesDone}/${completeness.stages.length} ${t('stagesLabel')}`}</strong>
+                {completeness.next ? (
+                  <button type="button" className="progress-action" disabled={!ready} onClick={() => goToField(completeness.next!.field)} title={`${t('nextStep')}: ${nextLabel}`}><span>{t('nextStep')}: {nextLabel}</span> <ArrowRight size={13} aria-hidden="true" /></button>
+                ) : completeness.complete ? (
+                  <button type="button" className="progress-action" disabled={!ready} onClick={() => setTab('export')}>{t('export')} <ArrowRight size={13} aria-hidden="true" /></button>
+                ) : (
+                  <button type="button" className="progress-action" disabled={!ready} onClick={reviewFirstAlert}>{t('validation')} <ArrowRight size={13} aria-hidden="true" /></button>
+                )}
+              </div>
+              <div className="sr-only" role="status" aria-live="polite">{progressMessage}</div>
+            </div>
+            <button type="button" className={`alerts-chip${alertCount ? '' : ' clear'}`} disabled={!ready} onClick={openValidation} title={t('validation')} aria-label={`${t('validation')}: ${alertCount ? `${alertCount} ${t('alerts')}` : t('noAlerts')}`}>
+              {alertCount ? <TriangleAlert size={14} aria-hidden="true" /> : <CircleCheck size={14} aria-hidden="true" />}<span aria-hidden="true">{alertCount}</span>
+            </button>
+            <span className="toolbar-divider" aria-hidden="true" />
+            <button type="button" className="icon-tool" onClick={undo} disabled={!past.length} title={t('undo')} aria-label={t('undo')}><Undo2 size={17} aria-hidden="true" /></button>
+            <button type="button" className="icon-tool" onClick={redo} disabled={!future.length} title={t('redo')} aria-label={t('redo')}><Redo2 size={17} aria-hidden="true" /></button>
+            <details className="builder-menu" ref={menuRef}>
+              <summary className="icon-tool" title={t('moreActions')} aria-label={t('moreActions')}><Ellipsis size={18} aria-hidden="true" /></summary>
+              <div className="builder-menu-panel">
+                <button type="button" disabled={!ready} onClick={menuAction(() => setTab('import'))}><Upload size={16} aria-hidden="true" />{t('import')}</button>
+                <button type="button" onClick={menuAction(loadExample)}><Sparkles size={16} aria-hidden="true" />{t('example')}</button>
+                <button type="button" onClick={menuAction(() => window.print())}><FileCheck2 size={16} aria-hidden="true" />{t('printPreview')}</button>
+                <button type="button" disabled={!ready} onClick={menuAction(() => setTouring(true))}><Compass size={16} aria-hidden="true" />{t('tourStart')}</button>
+                <a href="/learn" onClick={closeMenu}><HelpCircle size={16} aria-hidden="true" />{t('help')}</a>
+                <a href="https://link.mercadopago.com.br/strangerhits" target="_blank" rel="noopener noreferrer" onClick={closeMenu}><Coffee size={16} aria-hidden="true" />{t('coffee')}</a>
+                <hr />
+                <button type="button" className="danger" onClick={menuAction(() => setConfirmClear(true))}><Trash2 size={16} aria-hidden="true" />{t('clearAll')}</button>
+              </div>
+            </details>
+          </div>
+        </header>
 
       {tab === 'checklist' && <div className="single-module"><ChecklistPanel project={project} onChange={(next) => updateProject(next, 'Checklist atualizado')} /></div>}
       {tab === 'export' && <div className="single-module"><ExportPanel project={project} locale={locale} /></div>}
@@ -477,7 +535,6 @@ export function BuilderWorkspace() {
             </button>
             <section className="project-setup">
               <h2>{t('projectSetup')}</h2>
-              <label id="project-title-field">{t('title')}<input value={project.title} onChange={(event) => patchProject({ title: event.target.value })} /></label>
               <label>{t('authors')}<input value={project.authors.join('; ')} onChange={(event) => patchProject({ authors: event.target.value.split(';').map((value) => value.trim()).filter(Boolean) })} placeholder={t('authorsPlaceholder')} /></label>
               <label>{t('institution')}<input value={project.institution} onChange={(event) => patchProject({ institution: event.target.value })} /></label>
               <label>{t('protocol')}<input type="url" value={project.protocolUrl} onChange={(event) => patchProject({ protocolUrl: event.target.value })} /></label>
@@ -623,26 +680,31 @@ export function BuilderWorkspace() {
           </aside>
 
           <section className="diagram-panel" aria-label="Editor visual do diagrama">
-            <div className="canvas-label">
-              <span>PRISMA 2020 · SVG</span>
-              <div className="canvas-controls">
-                <fieldset className="style-switch">
-                  <legend>{t('visualStyle')}</legend>
-                  <div>
-                    {(['classic', 'modern'] as const).map((value) => (
-                      <label key={value}>
-                        <input type="radio" name="diagram-style" value={value} checked={(project.presentation.diagramStyle ?? 'classic') === value} onChange={() => patchProject({ presentation: { ...project.presentation, diagramStyle: value } }, 'Visual do diagrama alterado')} />
-                        <span>{value === 'classic' ? t('classicStyle') : t('modernStyle')}</span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
+            <div className="canvas-stage">
+            <fieldset className="style-switch canvas-style">
+              <legend className="sr-only">{t('visualStyle')}</legend>
+              <div>
+                {(['classic', 'modern'] as const).map((value) => (
+                  <label key={value}>
+                    <input type="radio" name="diagram-style" value={value} checked={(project.presentation.diagramStyle ?? 'classic') === value} onChange={() => patchProject({ presentation: { ...project.presentation, diagramStyle: value } }, 'Visual do diagrama alterado')} />
+                    <span>{value === 'classic' ? t('classicStyle') : t('modernStyle')}</span>
+                  </label>
+                ))}
               </div>
-            </div>
+            </fieldset>
             <PrismaDiagram project={project} locale={locale} selected={selected} onSelect={focusField} onSelectStage={focusStage} progress={{ ready: completeness.ready, bands: bandProgress(completeness), pendingLabel: t('pendingNode'), completeLabel: t('stageStatusComplete') }} zoom={zoom} onZoom={(update) => setZoom((value) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, update(value))))} />
-            <details className="diagram-alternative">
+            <div className="canvas-tools" role="toolbar" aria-label={t('zoomLevel')}>
+              <button type="button" onClick={() => setZoom((value) => Math.max(MIN_ZOOM, value / ZOOM_STEP))} disabled={zoom <= MIN_ZOOM} title={t('zoomOut')} aria-label={t('zoomOut')}><ZoomOut size={16} aria-hidden="true" /></button>
+              <output aria-label={t('zoomLevel')}>{Math.round(zoom * 100)}%</output>
+              <button type="button" onClick={() => setZoom((value) => Math.min(MAX_ZOOM, value * ZOOM_STEP))} disabled={zoom >= MAX_ZOOM} title={t('zoomIn')} aria-label={t('zoomIn')}><ZoomIn size={16} aria-hidden="true" /></button>
+              <button type="button" onClick={() => setZoom(0.82)} title={t('fit')} aria-label={t('fit')}><Focus size={16} aria-hidden="true" /></button>
+              <button type="button" onClick={() => workspaceRef.current?.requestFullscreen()} title={t('fullscreen')} aria-label={t('fullscreen')}><Maximize2 size={16} aria-hidden="true" /></button>
+              <button type="button" onClick={toggleTable} title={t('viewAsTable')} aria-label={t('viewAsTable')}><Table2 size={16} aria-hidden="true" /></button>
+            </div>
+            </div>
+            <details className="diagram-alternative" ref={tableRef}>
               <summary>{t('tabularAlternative')}</summary>
-              <table><thead><tr><th>{t('stage')}</th><th>{t('value')}</th><th>{t('origin')}</th></tr></thead><tbody>{countKeys.filter(applicable).map((field) => <tr key={field}><th>{labels[field]}</th><td>{calculated.values[field] ?? '—'}</td><td>{calculated.origins[field]}</td></tr>)}</tbody></table>
+              <table><thead><tr><th>{t('stage')}</th><th>{t('value')}</th><th>{t('origin')}</th></tr></thead><tbody>{countKeys.filter(applicable).map((field) => <tr key={field}><th>{labels[field]}</th><td>{calculated.values[field] ?? '—'}</td><td>{t(originKey[calculated.origins[field]])}</td></tr>)}</tbody></table>
             </details>
           </section>
 
@@ -655,7 +717,7 @@ export function BuilderWorkspace() {
             <section className="selected-node">
               <p className="kicker">{t('selectedNode')}</p><h2>{labels[selected]}</h2>
               <p>{definitions[selected] ?? t('defaultDefinition')}</p>
-              <dl><div><dt>{t('value')}</dt><dd>{calculated.values[selected] ?? '—'}</dd></div><div><dt>{t('origin')}</dt><dd>{calculated.origins[selected]}</dd></div><div><dt>{t('formula')}</dt><dd>{calculated.formulas[selected] ?? t('directValue')}</dd></div></dl>
+              <dl><div><dt>{t('value')}</dt><dd>{calculated.values[selected] ?? '—'}</dd></div><div><dt>{t('origin')}</dt><dd>{t(originKey[calculated.origins[selected]])}</dd></div><div><dt>{t('formula')}</dt><dd>{calculated.formulas[selected] ?? t('directValue')}</dd></div></dl>
               {(selectedOrigin === 'derived' || selectedOrigin === 'override') && (
                 <div className="override-box">
                   <button type="button" className="text-button" onClick={toggleOverride}>{selectedOverride ? t('restoreCalculation') : t('unlockDerived')}</button>
@@ -670,7 +732,7 @@ export function BuilderWorkspace() {
                 <label>{t('repositoryOrFile')}<input value={selectedProvenance.repositoryRef} onChange={(event) => patchProvenance({ repositoryRef: event.target.value })} /></label>
               </details>
             </section>
-            <section className="validation-panel">
+            <section className="validation-panel" id="validation-panel">
               <div className="panel-heading"><div><p className="kicker">{t('ruleEngine')}</p><h2>{t('validation')}</h2></div><span className="issue-count">{issues.filter((item) => item.status !== 'valid').length}</span></div>
               <div role="status" aria-live="polite" className="sr-only">{issues.length} {t('validationResults')}</div>
               {issues.map((item) => (
@@ -682,7 +744,7 @@ export function BuilderWorkspace() {
                   onClick={() => handleIssueClick(item)}
                   onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleIssueClick(item); } }}
                 >
-                  <span>{item.status}</span><h3>{item.title}</h3><p>{item.why}</p><small>{item.how}</small>
+                  <span>{t(issueStatusKey[item.status])}</span><h3>{item.title}</h3><p>{item.why}</p><small>{item.how}</small>
                 </article>
               ))}
             </section>

@@ -264,6 +264,17 @@ const en = {
   stageStatusAttention: 'needs review',
   stageCompleted: 'Stage complete',
   pendingNode: 'Pending',
+  diagramTab: 'Diagram',
+  moreActions: 'More actions',
+  modelDatabasesOnly: 'databases and registers',
+  modelWithOther: 'databases, registers and other sources',
+  changeModel: 'Change the flow model',
+  viewAsTable: 'View as table',
+  statusValid: 'Valid',
+  statusAttention: 'Attention',
+  statusInconsistency: 'Inconsistency',
+  statusMissing: 'Missing',
+  noAlerts: 'No alerts',
 };
 
 export type TranslationKey = keyof typeof en;
@@ -523,6 +534,17 @@ const pt: Record<TranslationKey, string> = {
   stageStatusAttention: 'requer revisão',
   stageCompleted: 'Etapa concluída',
   pendingNode: 'Pendente',
+  diagramTab: 'Diagrama',
+  moreActions: 'Mais ações',
+  modelDatabasesOnly: 'bases e registros',
+  modelWithOther: 'bases, registros e outras fontes',
+  changeModel: 'Alterar o modelo do fluxo',
+  viewAsTable: 'Ver como tabela',
+  statusValid: 'Válido',
+  statusAttention: 'Atenção',
+  statusInconsistency: 'Inconsistência',
+  statusMissing: 'Ausente',
+  noAlerts: 'Sem alertas',
 };
 
 const it: Record<TranslationKey, string> = {
@@ -759,6 +781,17 @@ const it: Record<TranslationKey, string> = {
   stageStatusAttention: 'da rivedere',
   stageCompleted: 'Fase completata',
   pendingNode: 'In attesa',
+  diagramTab: 'Diagramma',
+  moreActions: 'Altre azioni',
+  modelDatabasesOnly: 'banche dati e registri',
+  modelWithOther: 'banche dati, registri e altre fonti',
+  changeModel: 'Cambia il modello del flusso',
+  viewAsTable: 'Vedi come tabella',
+  statusValid: 'Valido',
+  statusAttention: 'Attenzione',
+  statusInconsistency: 'Incoerenza',
+  statusMissing: 'Mancante',
+  noAlerts: 'Nessun avviso',
 };
 
 const fr: Record<TranslationKey, string> = {
@@ -995,6 +1028,17 @@ const fr: Record<TranslationKey, string> = {
   stageStatusAttention: 'à vérifier',
   stageCompleted: 'Étape terminée',
   pendingNode: 'En attente',
+  diagramTab: 'Diagramme',
+  moreActions: 'Plus d’actions',
+  modelDatabasesOnly: 'bases de données et registres',
+  modelWithOther: 'bases, registres et autres sources',
+  changeModel: 'Changer le modèle du flux',
+  viewAsTable: 'Voir en tableau',
+  statusValid: 'Valide',
+  statusAttention: 'Attention',
+  statusInconsistency: 'Incohérence',
+  statusMissing: 'Manquant',
+  noAlerts: 'Aucune alerte',
 };
 
 const de: Record<TranslationKey, string> = {
@@ -1231,6 +1275,17 @@ const de: Record<TranslationKey, string> = {
   stageStatusAttention: 'prüfen',
   stageCompleted: 'Schritt abgeschlossen',
   pendingNode: 'Ausstehend',
+  diagramTab: 'Diagramm',
+  moreActions: 'Weitere Aktionen',
+  modelDatabasesOnly: 'Datenbanken und Register',
+  modelWithOther: 'Datenbanken, Register und weitere Quellen',
+  changeModel: 'Flussmodell ändern',
+  viewAsTable: 'Als Tabelle anzeigen',
+  statusValid: 'Gültig',
+  statusAttention: 'Hinweis',
+  statusInconsistency: 'Inkonsistenz',
+  statusMissing: 'Fehlt',
+  noAlerts: 'Keine Hinweise',
 };
 
 const zh: Record<TranslationKey, string> = {
@@ -1467,6 +1522,17 @@ const zh: Record<TranslationKey, string> = {
   stageStatusAttention: '需复核',
   stageCompleted: '阶段已完成',
   pendingNode: '待填写',
+  diagramTab: '流程图',
+  moreActions: '更多操作',
+  modelDatabasesOnly: '数据库与注册平台',
+  modelWithOther: '数据库、注册平台及其他来源',
+  changeModel: '更改流程模型',
+  viewAsTable: '以表格查看',
+  statusValid: '有效',
+  statusAttention: '注意',
+  statusInconsistency: '不一致',
+  statusMissing: '缺失',
+  noAlerts: '无提示',
 };
 
 export const translations: Record<Locale, Record<TranslationKey, string>> = {

@@ -1,10 +1,30 @@
 .builder-page { min-height: calc(100vh - var(--header-height)); background: var(--paper); }
-.builder-project-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.2rem; border-bottom: 1px solid var(--line); background: var(--paper-2); }
-.builder-project-header .kicker { margin: 0 0 .25rem; }
-.builder-header-status { display: flex; flex: none; align-items: center; gap: 1.4rem; }
+/* One bar for the whole builder: project identity, module tabs, progress and actions. */
+.builder-bar { position: relative; z-index: 6; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 1rem; padding: .55rem 1rem; border-bottom: 1px solid var(--line); background: var(--paper-2); }
+.builder-bar-project { display: grid; gap: .2rem; min-width: 0; }
+.builder-bar-meta { display: flex; align-items: center; gap: .9rem; min-width: 0; }
+.model-chip { display: inline-flex; align-items: center; gap: .25rem; min-width: 0; max-width: 100%; min-height: 24px; padding: 0 .55rem; overflow: hidden; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted); font: .66rem var(--font-sans); text-overflow: ellipsis; white-space: nowrap; }
+.model-chip svg { flex: none; }
+.model-chip:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.builder-bar-tools { display: flex; align-items: center; justify-content: flex-end; gap: .45rem; min-width: 0; }
+.alerts-chip { display: inline-flex; flex: none; align-items: center; gap: .3rem; min-height: 30px; padding: 0 .6rem; border: 1px solid color-mix(in srgb, var(--red) 50%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--red) 10%, transparent); color: var(--red); font: 500 .68rem var(--font-mono); }
+.alerts-chip.clear { border-color: color-mix(in srgb, var(--green) 45%, transparent); background: color-mix(in srgb, var(--green) 9%, transparent); color: var(--green); }
+.icon-tool { display: grid; flex: none; place-items: center; width: 34px; height: 34px; border: 1px solid transparent; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; list-style: none; }
+.icon-tool:hover:not(:disabled) { border-color: var(--line); color: var(--ink); }
+.icon-tool:disabled { opacity: .35; cursor: default; }
+.builder-menu { position: relative; flex: none; }
+.builder-menu > summary::-webkit-details-marker { display: none; }
+.builder-menu[open] > summary { border-color: var(--accent); color: var(--accent); }
+.builder-menu-panel { position: absolute; z-index: 30; top: calc(100% + .45rem); right: 0; display: grid; min-width: 230px; padding: .35rem; border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 96%, transparent); backdrop-filter: blur(14px); box-shadow: var(--shadow); }
+.builder-menu-panel > button, .builder-menu-panel > a { display: flex; align-items: center; gap: .65rem; min-height: 38px; padding: 0 .75rem; border: 0; background: transparent; color: var(--ink); font: .78rem var(--font-sans); text-align: left; cursor: pointer; }
+.builder-menu-panel > :is(button, a) svg { flex: none; color: var(--muted); }
+.builder-menu-panel > :is(button, a):hover:not(:disabled), .builder-menu-panel > :is(button, a):focus-visible { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.builder-menu-panel > button:disabled { opacity: .4; cursor: default; }
+.builder-menu-panel > .danger, .builder-menu-panel > .danger svg { color: var(--red); }
+.builder-menu-panel hr { width: 100%; margin: .3rem 0; border: 0; border-top: 1px solid var(--line); }
 /* Completeness: a ring with the share of required inputs filled, plus a shortcut to what comes next. */
-.builder-progress { display: flex; align-items: center; gap: .7rem; }
-.completeness-ring { position: relative; display: grid; flex: none; place-items: center; width: 42px; height: 42px; border-radius: 50%; }
+.builder-progress { display: flex; min-width: 0; align-items: center; gap: .6rem; margin-right: .3rem; }
+.completeness-ring { position: relative; display: grid; flex: none; place-items: center; width: 38px; height: 38px; border-radius: 50%; }
 .completeness-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; }
 .completeness-ring circle { fill: none; stroke-width: 3.5; }
 .completeness-track { stroke: var(--line); }
@@ -14,27 +34,23 @@
 .builder-progress.is-complete .completeness-ring > span { color: var(--green); }
 .progress-copy { display: grid; justify-items: start; gap: .15rem; min-width: 0; }
 .progress-copy strong { color: var(--ink); font: 600 .74rem var(--font-sans); }
-.progress-action { display: inline-flex; align-items: center; gap: .3rem; max-width: 300px; padding: 0; border: 0; background: none; color: var(--accent); font: .68rem var(--font-sans); text-align: left; }
+.progress-action { display: inline-flex; align-items: center; gap: .3rem; max-width: 210px; padding: 0; border: 0; background: none; color: var(--accent); font: .68rem var(--font-sans); text-align: left; }
 .progress-action span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .progress-action svg { flex: none; }
 .progress-action:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
-.project-title-input { min-width: min(680px, 60vw); border: 0; background: transparent; padding: 0; color: var(--ink); font: 500 1.35rem var(--font-display); }
+.project-title-input { width: 100%; min-width: 0; border: 0; background: transparent; padding: 0; color: var(--ink); font: 500 1.2rem var(--font-display); text-overflow: ellipsis; }
 .save-indicator { display: flex; align-items: center; gap: .5rem; color: var(--muted); font: .64rem var(--font-mono); text-transform: uppercase; }
 .save-indicator span { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
 .save-indicator span.saving { background: var(--accent); }
-.builder-toolbar { display: flex; align-items: center; gap: .25rem; min-height: 52px; padding: .4rem .8rem; overflow-x: auto; border-bottom: 1px solid var(--line); background: var(--surface); }
-.builder-toolbar button, .builder-toolbar a { display: inline-flex; align-items: center; gap: .4rem; min-height: 36px; padding: 0 .55rem; white-space: nowrap; border: 1px solid transparent; background: transparent; color: var(--muted); font-size: .67rem; }
-.builder-toolbar button:hover, .builder-toolbar a:hover { border-color: var(--line); color: var(--ink); }
-.builder-toolbar svg { width: 16px; height: 16px; }
-.builder-toolbar output { min-width: 44px; color: var(--muted); font: .62rem var(--font-mono); text-align: center; }
-.toolbar-divider { width: 1px; height: 24px; margin: 0 .25rem; background: var(--line); }
-.builder-tabs { display: flex; padding: .5rem .8rem 0; border-bottom: 1px solid var(--line); background: var(--paper-2); }
-.builder-tabs button { min-height: 40px; padding: 0 1rem; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); font: 700 .65rem var(--font-mono); text-transform: uppercase; }
-.builder-tabs button[aria-selected='true'] { border-color: var(--accent); color: var(--ink); }
+.toolbar-divider { flex: none; width: 1px; height: 24px; margin: 0 .2rem; background: var(--line); }
+/* Module tabs: a compact segmented control in the middle of the bar. */
+.builder-tabs { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
+.builder-tabs button { min-height: 30px; padding: 0 1rem; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font: 700 .62rem var(--font-mono); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.builder-tabs button[aria-selected='true'] { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--ink); }
 /* Side panels use plain lengths (not minmax) so grid-template-columns can animate when they collapse. */
 .builder-workspace {
   --data-width: clamp(260px, 22vw, 320px); --context-width: clamp(270px, 23vw, 330px); --rail-width: 48px;
-  display: grid; grid-template-columns: var(--data-width) minmax(480px, 1fr) var(--context-width); min-height: calc(100vh - 245px);
+  display: grid; grid-template-columns: var(--data-width) minmax(480px, 1fr) var(--context-width); min-height: calc(100dvh - var(--header-height) - 70px);
   transition: grid-template-columns var(--motion-slow, 450ms) var(--ease-out, ease);
 }
 .builder-workspace.data-collapsed { --data-width: var(--rail-width); }
@@ -116,8 +132,15 @@
 .add-database-btn { font-size: .68rem; margin-top: .2rem; text-align: left; }
 
 .diagram-panel { min-width: 0; overflow: hidden; background: color-mix(in srgb, var(--surface-2) 50%, var(--paper)); }
-.canvas-label { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .55rem .8rem; border-bottom: 1px solid var(--line); background: var(--surface); color: var(--muted); font: .58rem var(--font-mono); letter-spacing: .08em; }
-.canvas-controls { display: flex; align-items: end; gap: .65rem; }
+/* The canvas carries its own controls: appearance switch top right, zoom bottom right. */
+.diagram-panel { display: flex; flex-direction: column; }
+.canvas-stage { position: relative; flex: 1; min-height: 0; }
+.canvas-style { position: absolute; z-index: 4; top: .75rem; right: 1rem; }
+.canvas-tools { position: absolute; z-index: 4; right: 1rem; bottom: 1rem; display: flex; align-items: center; gap: .1rem; padding: .25rem; border: 1px solid var(--line); border-radius: 999px; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(10px); box-shadow: var(--shadow); }
+.canvas-tools button { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); }
+.canvas-tools button:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--ink); }
+.canvas-tools button:disabled { opacity: .35; }
+.canvas-tools output { min-width: 42px; color: var(--muted); font: .62rem var(--font-mono); text-align: center; }
 /* Diagram appearance: a two-position switch over native radios (arrow keys, screen readers). */
 .style-switch { min-width: 0; margin: 0; padding: 0; border: 0; }
 .style-switch legend { float: left; width: 100%; margin-bottom: .3rem; padding: 0; color: var(--muted); font: .54rem var(--font-mono); letter-spacing: .04em; text-transform: uppercase; }
@@ -135,7 +158,7 @@
 .style-switch label:not(:has(input:checked)):hover { color: var(--accent); }
 .style-switch label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 .style-switch input { position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; opacity: 0; pointer-events: none; }
-.diagram-scroller { width: 100%; height: calc(100vh - 286px); overflow: auto; padding: 1rem; touch-action: pan-x pan-y; }
+.diagram-scroller { width: 100%; height: calc(100dvh - var(--header-height) - 130px); overflow: auto; padding: 3.5rem 1rem 4.5rem; touch-action: pan-x pan-y; }
 .diagram-scroller { cursor: grab; }
 .diagram-scroller[data-panning] { cursor: grabbing; }
 .diagram-scroller[data-panning] .diagram-node, .diagram-scroller[data-panning] .diagram-stage { cursor: grabbing; }
@@ -248,38 +271,50 @@
 .mapping-controls { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; margin-bottom: 1rem; }
 .mapping-preview .primary-button { margin-top: 1rem; }
 
+@media (min-width: 1181px) {
+  .builder-page:has(> .builder-workspace) { display: flex; flex-direction: column; height: calc(100dvh - var(--header-height)); }
+  .builder-page > .builder-workspace { flex: 1; min-height: 0; grid-template-rows: 100%; }
+  .data-panel, .context-panel { max-height: none; }
+  .diagram-panel { min-height: 0; }
+  .diagram-scroller { height: 100%; }
+}
+@media (max-width: 1240px) {
+  .progress-copy { display: none; }
+}
 @media (max-width: 1180px) {
+  .builder-bar { grid-template-columns: minmax(0, 1fr) auto; }
+  .builder-tabs { grid-column: 1 / -1; grid-row: 2; justify-self: center; }
+  /* Primi's button sits over the canvas corner here, so zoom moves to the left. */
+  .canvas-tools { right: auto; left: 1rem; }
   .builder-workspace { --data-width: clamp(250px, 26vw, 300px); grid-template-columns: var(--data-width) minmax(440px, 1fr); }
   .context-panel { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; align-content: start; max-height: none; border-top: 1px solid var(--line); border-left: 0; }
   .context-panel > .panel-toggle { grid-column: 1 / -1; }
 }
 @media (max-width: 780px) {
-  .builder-project-header { align-items: flex-start; flex-direction: column; }
-  .builder-header-status { flex-wrap: wrap; gap: .8rem 1.4rem; max-width: 100%; }
-  .builder-progress, .progress-copy { min-width: 0; max-width: 100%; }
-  .project-title-input { min-width: 0; width: 100%; }
-  .builder-toolbar button span, .builder-toolbar a span { display: none; }
+  .builder-bar { grid-template-columns: 1fr; gap: .6rem; padding: .7rem .75rem; }
+  .builder-tabs { grid-row: auto; justify-self: stretch; }
+  .builder-tabs button { flex: 1; padding: 0 .5rem; }
+  .builder-bar-tools { justify-content: flex-start; flex-wrap: wrap; }
+  .builder-bar-meta { flex-wrap: wrap; gap: .4rem .8rem; }
   .builder-workspace { display: flex; flex-direction: column; }
   .data-panel, .context-panel { max-height: none; overflow: visible; border: 0; }
   .data-panel { order: 2; }
   .diagram-panel { order: 1; min-height: 72vh; }
   .context-panel { order: 3; display: block; }
   .diagram-scroller { height: 65vh; }
-  .canvas-label { align-items: flex-start; flex-direction: column; }
-  .canvas-controls { width: 100%; flex-wrap: wrap; }
-  .style-switch { flex: 1 1 auto; }
+  .canvas-style { left: .75rem; right: .75rem; }
+  .canvas-tools { left: .75rem; bottom: .75rem; }
   .module-header { flex-direction: column; }
   .checklist-fields { grid-template-columns: 1fr 1fr; }
   .export-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 520px) {
-  .builder-tabs { overflow-x: auto; }
   .checklist-item header { grid-template-columns: 28px 1fr; }
   .checklist-item header select { grid-column: 1 / -1; }
   .checklist-fields, .mapping-controls, .export-grid { grid-template-columns: 1fr; }
 }
 @media print {
-  .global-header, .global-footer, .coffee-button, .builder-project-header, .builder-toolbar, .builder-tabs, .data-panel, .context-panel, .canvas-label, .diagram-alternative { display: none !important; }
+  .global-header, .global-footer, .coffee-button, .builder-bar, .data-panel, .context-panel, .canvas-style, .canvas-tools, .diagram-alternative { display: none !important; }
   .builder-workspace { display: block; }
   .diagram-panel { overflow: visible; background: #fff; }
   .diagram-scroller { height: auto; overflow: visible; padding: 0; }
@@ -310,3 +345,6 @@
 .tour-card > footer .text-button { font-size: .72rem; }
 @media (max-width: 639px) { .tour-card { width: auto; } }
 @media print { .guided-tour { display: none !important; } }
+
+/* In the builder the coffee link lives in the "more actions" menu instead of floating over the panels. */
+body:has(.builder-page) .coffee-region { display: none; }

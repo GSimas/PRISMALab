@@ -156,7 +156,7 @@
 /* ---------- Interactive states ---------- */
 
 .primary-button, .secondary-button, .danger-button, .header-primary, .header-scientata-link, .icon-button, .text-button,
-.card-actions button, .builder-toolbar button, .builder-toolbar a, .builder-tabs button, .about-tabs button, .export-grid button,
+.card-actions button, .icon-tool, .canvas-tools button, .builder-menu-panel > :is(button, a), .builder-tabs button, .about-tabs button, .export-grid button,
 .mobile-menu > summary, .settings-menu > summary, .checklist-item .info-toggle, .reasons-editor > div button,
 .coffee-button, .assistant-fab, .desktop-nav a, .global-footer a, .brand-mark, .source-link, .extension-directory a, .prose-page a {
   transition:
@@ -201,7 +201,7 @@ input, select, textarea { transition: border-color var(--motion-base) var(--ease
   .coffee-button:hover, .assistant-fab:hover { transform: translateY(-3px); box-shadow: 0 0 34px rgb(184 255 74 / 40%); }
   .card-actions button:hover svg { transform: scale(1.12); }
   .text-button:hover { color: var(--accent); }
-  .builder-toolbar button:hover, .builder-toolbar a:hover { color: var(--accent); background-color: color-mix(in srgb, var(--accent) 8%, transparent); }
+  .icon-tool:hover:not(:disabled), .canvas-tools button:hover:not(:disabled) { color: var(--accent); background-color: color-mix(in srgb, var(--accent) 8%, transparent); }
   .builder-tabs button:hover, .about-tabs button:hover { color: var(--accent); }
   .brand:hover .brand-mark { rotate: 0deg; border-color: var(--accent); box-shadow: 0 0 22px -2px color-mix(in srgb, var(--accent) 55%, transparent); }
   .global-footer a:hover { color: var(--accent); }
@@ -226,11 +226,11 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 
 /* Press feedback. */
 :is(.primary-button, .secondary-button, .danger-button, .header-primary, .export-grid button):active { transform: translateY(0) scale(.98); transition-duration: 60ms; }
-:is(.icon-button, .card-actions button, .builder-toolbar button, .mobile-menu > summary, .settings-menu > summary, .assistant-fab, .coffee-button):active { transform: scale(.94); transition-duration: 60ms; }
+:is(.icon-button, .card-actions button, .icon-tool, .canvas-tools button, .mobile-menu > summary, .settings-menu > summary, .assistant-fab, .coffee-button):active { transform: scale(.94); transition-duration: 60ms; }
 
 /* ---------- Dropdowns and disclosures ---------- */
 
-.settings-menu[open] > .settings-panel, .mobile-menu[open] > nav { transform-origin: top right; animation: pop-in var(--motion-slow) var(--ease-out); }
+.settings-menu[open] > .settings-panel, .mobile-menu[open] > nav, .builder-menu[open] > .builder-menu-panel { transform-origin: top right; animation: pop-in var(--motion-slow) var(--ease-out); }
 /* Items follow the panel in a short cascade. */
 .settings-menu[open] > .settings-panel > *, .mobile-menu[open] > nav > a { animation: rise-in var(--motion-slow) var(--ease-out) backwards; }
 :is(.settings-panel > *, .mobile-menu nav > a):nth-child(2) { animation-delay: 40ms; }
@@ -239,23 +239,23 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .settings-menu > summary svg { transition: transform var(--motion-slow) var(--ease-out); }
 .settings-menu[open] > summary svg { transform: rotate(60deg); }
 .settings-menu[open] > summary:not(:hover), .mobile-menu[open] > summary:not(:hover) { border-color: var(--accent); color: var(--accent); }
-.settings-menu::details-content, .mobile-menu::details-content {
+.settings-menu::details-content, .mobile-menu::details-content, .builder-menu::details-content {
   opacity: 0;
   transition: opacity var(--motion-exit) var(--ease-out), content-visibility var(--motion-exit) allow-discrete;
 }
-.settings-menu[open]::details-content, .mobile-menu[open]::details-content { opacity: 1; }
+.settings-menu[open]::details-content, .mobile-menu[open]::details-content, .builder-menu[open]::details-content { opacity: 1; }
 .mobile-menu nav a { transition: background-color var(--motion-base) var(--ease-out), color var(--motion-base) var(--ease-out), padding var(--motion-base) var(--ease-out); }
 .mobile-menu nav a:hover { padding-left: 1.3rem; background-color: color-mix(in srgb, var(--accent) 7%, transparent); color: var(--accent); }
 
 /* Accordions: height animates where the browser supports ::details-content + interpolate-size;
  * elsewhere the revealed content still fades in. */
-details:not(.mobile-menu, .settings-menu)::details-content {
+details:not(.mobile-menu, .settings-menu, .builder-menu)::details-content {
   block-size: 0;
   overflow-y: clip;
   transition: block-size var(--motion-slow) var(--ease-out), content-visibility var(--motion-slow) allow-discrete;
 }
-details:not(.mobile-menu, .settings-menu)[open]::details-content { block-size: auto; }
-details:not(.mobile-menu, .settings-menu)[open] > :not(summary) { animation: fade-in var(--motion-slow) var(--ease-out); }
+details:not(.mobile-menu, .settings-menu, .builder-menu)[open]::details-content { block-size: auto; }
+details:not(.mobile-menu, .settings-menu, .builder-menu)[open] > :not(summary) { animation: fade-in var(--motion-slow) var(--ease-out); }
 
 .checklist-info, .mapping-preview, .override-box { animation: rise-in var(--motion-base) var(--ease-out); }
 .assistant-message { animation: rise-in var(--motion-base) var(--ease-out); }
